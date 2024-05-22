@@ -12,11 +12,11 @@ type Split struct {
 
 type Parser struct {
 	ParseGroups int
-	Split Split
-	SegmentOut segment.Segment
+	Input Split
+	Out segment.Segment
 }
 
 
 func(p *Parser) Serve() {
-	
+
 }
