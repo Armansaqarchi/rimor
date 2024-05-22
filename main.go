@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"rimor/preprocessing"
+	"rimor/pkg/preprocessing"
 )
 
 const COLLECTION_PATH = "collection/test_collection.json"
