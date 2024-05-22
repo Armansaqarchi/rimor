@@ -3,9 +3,10 @@ package record
 
 type Recorder interface {
 	GetTerm() string
-	GetIDF() int
+	GetDF() int
+	GetTF(int) int
 	GetTermFreq() int
-	GetDfList() []int
+	GetTFList() []int
 	GetDfNonZeroList() []int
 }
 
@@ -24,8 +25,12 @@ func (r *Record) GetTerm() string{
 }
 
 
-func (r *Record) GetIDF() int{
+func (r *Record) GetDF() int{
 	return r.IDF
+}
+
+func (r *Record) GetTF(int) int {
+	return 0
 }
 
 func (r *Record) GetDFList() []int {
