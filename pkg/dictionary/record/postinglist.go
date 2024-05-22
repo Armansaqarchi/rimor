@@ -2,7 +2,7 @@ package record
 
 
 type IPostingListElem interface {
-	GetDF() int
+	GetTF() int
 	GetDocID() int
 	GetNextElemt() *IPostingListElem
 }
@@ -10,13 +10,13 @@ type IPostingListElem interface {
 
 type PostingListElem struct {
 	DocID 	int
-	DF  	int
+	TF  	int
 	NextElem IPostingListElem
 }
 
 
 func (ple *PostingListElem) GetDF() int{
-	return ple.DF
+	return ple.TF
 }
 
 func (ple *PostingListElem) GetDocID() int {

@@ -5,6 +5,7 @@ type Recorder interface {
 	GetTerm() string
 	GetDF() int
 	GetTF(int) int
+	GetWeight(int) float64
 	GetTermFreq() int
 	GetTFList() []int
 	GetDfNonZeroList() []int
@@ -15,7 +16,7 @@ type Recorder interface {
 type Record struct {
 	Term string
 	TermFreq int
-	IDF int // no need to keep weights in float64 which is expensive
+	DF int // no need to keep weights in float64 which is expensive
 	PostingList *PostingListElem // points to the first element in posting list
 }
 
@@ -26,7 +27,12 @@ func (r *Record) GetTerm() string{
 
 
 func (r *Record) GetDF() int{
-	return r.IDF
+	return r.DF
+}
+
+
+func (r *Record) GetWeight() float64 {
+	return 0.0
 }
 
 func (r *Record) GetTF(int) int {
