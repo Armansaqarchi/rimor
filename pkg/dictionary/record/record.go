@@ -6,18 +6,27 @@ type Recorder interface {
 	GetDF() int
 	GetTF(int) int
 	GetWeight(int) float64
-	GetTermFreq() int
-	GetTFList() []int
-	GetDfNonZeroList() []int
+	GetLast() IPostingListElem
+	AddToPosting(IPostingListElem)
 }
 
 
 
 type Record struct {
 	Term string
-	TermFreq int
 	DF int // no need to keep weights in float64 which is expensive
-	PostingList *PostingListElem // points to the first element in posting list
+	PostingList IPostingListElem // points to the first element in posting list
+	Last IPostingListElem
+}
+
+
+func NewRecord(term string) Recorder{
+	return &Record{
+		Term: term,
+		DF: 0,
+		PostingList: nil,
+		Last: nil,
+	}
 }
 
 
@@ -31,7 +40,7 @@ func (r *Record) GetDF() int{
 }
 
 
-func (r *Record) GetWeight() float64 {
+func (r *Record) GetWeight(int) float64 {
 	return 0.0
 }
 
@@ -39,10 +48,16 @@ func (r *Record) GetTF(int) int {
 	return 0
 }
 
-func (r *Record) GetDFList() []int {
-	return []int{}
+func (r *Record) GetLast() IPostingListElem {
+	return r.Last
 }
 
-func (r *Record) GetDfNonZeroList() []int {
-	return []int{}
+
+func (r *Record) AddToPosting(elm IPostingListElem) {
+	if r.PostingList == nil {
+		r.PostingList = elm
+		r.Last = elm
+	}
+	r.Last.SetNextElem(elm)
+	r.Last = elm
 }

@@ -45,7 +45,10 @@ func (p *Parser) AddTokenToFragment(t string, d int64) {
 	}
 	for idx, r := range p.runeGroups {
 		if rune(t[0]) <= r {
-			p.Out.Fragments[idx].AddPair(t, d)
+			p.Out.Fragments[idx].AddPair(&segment.Pair{
+				Term: t,
+				Doc: d,
+			})
 		}
 	}
 }
