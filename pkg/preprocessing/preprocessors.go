@@ -23,9 +23,6 @@ func applyNormalizingMap(normalizer map[string] string, doc Document) Document {
 	}
 }
 
-
-
-
 type unicodeReplacementPersianNormalizer struct {
 	persianCharsNormalizationMap map[string] string
 }
@@ -40,9 +37,6 @@ func (normalizer *unicodeReplacementPersianNormalizer) Process(document Document
 	return applyNormalizingMap(normalizer.persianCharsNormalizationMap, document)
 }
 
-
-
-
 type persianDigitNormalizer struct {
 	persianDigitsNormalizationMap map[string] string
 }
@@ -56,9 +50,6 @@ func NewPersianDigitNormalizer() persianDigitNormalizer {
 func (normalizer *persianDigitNormalizer) Process(document Document) Document{
 	return applyNormalizingMap(normalizer.persianDigitsNormalizationMap, document)
 }
-
-
-
 
 type puncutationRemover struct {
 	knownPunctuatuions	string
@@ -82,8 +73,6 @@ func (normalizer *puncutationRemover) Process(document Document) Document {
 	} 
 }
 
-
-
 type specialArabicPhraseNormalizer struct {
 	specialArabicPhraseMap	map[string] string
 }
@@ -97,8 +86,6 @@ func NewspecialArabicPhraseNormalizer() specialArabicPhraseNormalizer {
 func (normalizer *specialArabicPhraseNormalizer) Process(document Document) Document {
 	return applyNormalizingMap(normalizer.specialArabicPhraseMap, document)
 }
-
-
 
 type mostUsedWordRemover struct {
 	wordFreqMap map[string] int

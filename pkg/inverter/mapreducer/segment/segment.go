@@ -4,26 +4,11 @@ import (
 	"sync"
 )
 
-type (
-	Pair struct {
-		Term string
-		Doc  int
-	}
 
-	Fragment struct {
-		Pairs []Pair
-	}
-
-	Segment struct {
-		Fragments []*Fragment
-	}
-
-
-	SegmentManager struct {
+type SegmentManager struct {
 		Segments []*Segment
 		mu sync.Mutex
-	}
-)
+}
 
 
 func NewSegmentManager(splits int) *SegmentManager{
@@ -64,4 +49,28 @@ func (sm *SegmentManager) GetVerticalSegment(num int) *Segment{
 		segment.Fragments = append(segment.Fragments, sm.Segments[i].Fragments[num]) 
 	}
 	return &segment
+}
+
+type Segment struct {
+	Fragments []*Fragment
+}
+
+
+
+
+type Fragment struct {
+	Pairs []Pair
+}
+
+func (f *Fragment) AddPair(term string, doc int64){
+	f.Pairs = append(f.Pairs, Pair{
+		Term: term,
+		Doc: doc,
+	})
+}
+
+
+type Pair struct {
+	Term string
+	Doc  int64
 }
