@@ -45,9 +45,29 @@ func (preprocessor *Preprocessor) Process() <-chan Document {
 }
 
 func (preprocessor *Preprocessor) applyAllPreprocessingSteps(document Document) Document {
-	var processed Document
+	var processed Document = document
 	for _, step := range preprocessor.preprocessingSteps {
-		processed = step.Process(document)
+		processed = step.Process(processed)
 	}
 	return processed
+}
+
+
+type TkDocument struct {
+	Id         int64 
+	DocUrl     string
+	TokenzedDocContent []string
+}
+
+
+type TkDocumentCollection struct {
+	DocList []TkDocument
+}
+
+type Tokenizer struct {
+
+}
+
+func (tokenizer *Tokenizer) Tokenize(documentCollection DocumentCollection) TkDocumentCollection {
+	return TkDocumentCollection{}
 }
