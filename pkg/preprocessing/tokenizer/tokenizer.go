@@ -6,13 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
 
 const (
 	WORDS_PATH = "words.dat"
-	VERBS = "verbs.dat"
+	VERBS_PATH = "verbs.dat"
 )
 
 // WordTokenizer defines the tokenizer struct.
@@ -35,11 +36,11 @@ type WordTokenizer struct {
 	abbreviations      map[string]string
 
 	words       map[string][2]string
-	afterVerbs  map[string]struct{}
-	beforeVerbs map[string]struct{}
+	afterVerbs  map[string]bool
+	beforeVerbs map[string]bool
 	verbs       []string
-	bons        map[string]struct{}
-	verbe       map[string]struct{}
+	bons        map[string]bool
+	verbe       map[string]bool
 }
 
 // NewWordTokenizer initializes a new WordTokenizer.
@@ -64,11 +65,143 @@ func NewWordTokenizer(
 		numberFloatPattern: regexp.MustCompile(`[\d۰-۹]+\\[\d۰-۹]+`),
 		hashtagPattern:     regexp.MustCompile(`#(\S+)`),
 		words:              make(map[string][2]string),
-		afterVerbs:         make(map[string]struct{}),
-		beforeVerbs:        make(map[string]struct{}),
-		bons:               make(map[string]struct{}),
-		verbe:              make(map[string]struct{}),
+		afterVerbs:         make(map[string]bool),
+		beforeVerbs:        make(map[string]bool),
+		bons:               make(map[string]bool),
+		verbe:              make(map[string]bool),
 		abbreviations:      make(map[string]string),
+	}
+
+	tokenizer.beforeVerbs = map[string]bool{
+		"خواهم":   true,
+		"خواهی":   true,
+		"خواهد":   true,
+		"خواهیم":  true,
+		"خواهید":  true,
+		"خواهند":  true,
+		"نخواهم":  true,
+		"نخواهی":  true,
+		"نخواهد":  true,
+		"نخواهیم": true,
+		"نخواهید": true,
+		"نخواهند": true,
+	}
+
+	tokenizer.afterVerbs = map[string]bool{
+		"ام":         true,
+		"ای":         true,
+		"است":        true,
+		"ایم":        true,
+		"اید":        true,
+		"اند":        true,
+		"بودم":       true,
+		"بودی":       true,
+		"بود":        true,
+		"بودیم":      true,
+		"بودید":      true,
+		"بودند":      true,
+		"باشم":       true,
+		"باشی":       true,
+		"باشد":       true,
+		"باشیم":      true,
+		"باشید":      true,
+		"باشند":      true,
+		"شده_ام":     true,
+		"شده_ای":     true,
+		"شده_است":    true,
+		"شده_ایم":    true,
+		"شده_اید":    true,
+		"شده_اند":    true,
+		"شده_بودم":   true,
+		"شده_بودی":   true,
+		"شده_بود":    true,
+		"شده_بودیم":  true,
+		"شده_بودید":  true,
+		"شده_بودند":  true,
+		"شده_باشم":   true,
+		"شده_باشی":   true,
+		"شده_باشد":   true,
+		"شده_باشیم":  true,
+		"شده_باشید":  true,
+		"شده_باشند":  true,
+		"نشده_ام":    true,
+		"نشده_ای":    true,
+		"نشده_است":   true,
+		"نشده_ایم":   true,
+		"نشده_اید":   true,
+		"نشده_اند":   true,
+		"نشده_بودم":  true,
+		"نشده_بودی":  true,
+		"نشده_بود":   true,
+		"نشده_بودیم": true,
+		"نشده_بودید": true,
+		"نشده_بودند": true,
+		"نشده_باشم":  true,
+		"نشده_باشی":  true,
+		"نشده_باشد":  true,
+		"نشده_باشیم": true,
+		"نشده_باشید": true,
+		"نشده_باشند": true,
+		"شوم":        true,
+		"شوی":        true,
+		"شود":        true,
+		"شویم":       true,
+		"شوید":       true,
+		"شوند":       true,
+		"شدم":        true,
+		"شدی":        true,
+		"شد":         true,
+		"شدیم":       true,
+		"شدید":       true,
+		"شدند":       true,
+		"نشوم":       true,
+		"نشوی":       true,
+		"نشود":       true,
+		"نشویم":      true,
+		"نشوید":      true,
+		"نشوند":      true,
+		"نشدم":       true,
+		"نشدی":       true,
+		"نشد":        true,
+		"نشدیم":      true,
+		"نشدید":      true,
+		"نشدند":      true,
+		"می‌شوم":     true,
+		"می‌شوی":     true,
+		"می‌شود":     true,
+		"می‌شویم":    true,
+		"می‌شوید":    true,
+		"می‌شوند":    true,
+		"می‌شدم":     true,
+		"می‌شدی":     true,
+		"می‌شد":      true,
+		"می‌شدیم":    true,
+		"می‌شدید":    true,
+		"می‌شدند":    true,
+		"نمی‌شوم":    true,
+		"نمی‌شوی":    true,
+		"نمی‌شود":    true,
+		"نمی‌شویم":   true,
+		"نمی‌شوید":   true,
+		"نمی‌شوند":   true,
+		"نمی‌شدم":    true,
+		"نمی‌شدی":    true,
+		"نمی‌شد":     true,
+		"نمی‌شدیم":   true,
+		"نمی‌شدید":   true,
+		"نمی‌شدند":   true,
+		"خواهم_شد":   true,
+		"خواهی_شد":   true,
+		"خواهد_شد":   true,
+		"خواهیم_شد":  true,
+		"خواهید_شد":  true,
+		"خواهند_شد":  true,
+		"نخواهم_شد":  true,
+		"نخواهی_شد":  true,
+		"نخواهد_شد":  true,
+		"نخواهیم_شد": true,
+		"نخواهید_شد": true,
+		"نخواهند_شد": true,
 	}
 
 	err := tokenizer.loadWords(wordsFile)
@@ -124,13 +257,13 @@ func (wt *WordTokenizer) loadVerbs(verbsFile string) error {
 		wt.verbs = append(wt.verbs, verb)
 		parts := strings.Split(verb, "#")
 		if len(parts) > 0 {
-			wt.bons[parts[0]] = struct{}{}
+			wt.bons[parts[0]] = true
 		}
 	}
 
 	for bon := range wt.bons {
-		wt.verbe[bon+"ه"] = struct{}{}
-		wt.verbe["ن"+bon+"ه"] = struct{}{}
+		wt.verbe[bon+"ه"] = true
+		wt.verbe["ن"+bon+"ه"] = true
 	}
 
 	return scanner.Err()
@@ -156,10 +289,10 @@ func (wt *WordTokenizer) loadAbbreviations() error {
 
 // Tokenize tokenizes the given text.
 func (wt *WordTokenizer) Tokenize(text string) []string {
+	// TODO: This tokenizer is replacing info such as email or link with a placeholder. This is not the intended behaviour and should be fixed
 	if wt.joinAbbreviations {
 		text = wt.replaceAbbreviations(text)
 	}
-
 	if wt.separateEmoji {
 		text = wt.emojiPattern.ReplaceAllString(text, " $0 ")
 	}
@@ -176,7 +309,7 @@ func (wt *WordTokenizer) Tokenize(text string) []string {
 		text = wt.numberIntPattern.ReplaceAllString(text, " NUM ")
 	}
 
-	text = regexp.MustCompile(`[؟!?]+|[\d.:]+|[:.،؛»\])}"«\[({/\\]`).ReplaceAllString(text, " $0 ")
+	text = regexp.MustCompile(`[؟!?]+|[\d۰-۹.:]+|[:.،؛»\])}"«\[({/\\]`).ReplaceAllString(text, " $0 ")
 	tokens := strings.Fields(text)
 
 	if wt.joinVerbParts {
@@ -195,39 +328,23 @@ func (wt *WordTokenizer) joinVerbPartsFunc(tokens []string) []string {
 	if len(tokens) == 1 {
 		return tokens
 	}
+	result := []string{""}
 
-	var result []string
 	for i := len(tokens) - 1; i >= 0; i-- {
 		token := tokens[i]
-		if _, beforeExists := wt.beforeVerbs[token]; beforeExists {
-			// If token exists in beforeVerbs
-			if len(result) > 0 {
-				result[len(result)-1] = token + "_" + result[len(result)-1]
-			} else {
-				result = append(result, token)
-			}
-		} else if len(result) > 0 {
-			// Check if the last token in result exists in afterVerbs and current token exists in verbe
-			lastToken := result[len(result)-1]
-			if _, afterExists := wt.afterVerbs[lastToken]; afterExists {
-				if _, verbeExists := wt.verbe[token]; verbeExists {
-					result[len(result)-1] = token + "_" + result[len(result)-1]
-				} else {
-					result = append(result, token)
-				}
-			} else {
-				result = append(result, token)
-			}
+
+		isInBeforeVerbs, _ := wt.beforeVerbs[token]
+		isLastTokenInAfterVerbs, _ := wt.afterVerbs[result[len(result)-1]]
+		isInVerbe, _ := wt.verbe[token]
+
+		if isInBeforeVerbs || (isLastTokenInAfterVerbs && isInVerbe) {
+			result[len(result)-1] = token + " " + result[len(result)-1]
 		} else {
 			result = append(result, token)
 		}
 	}
-
-	// Reverse the result slice
-	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
-		result[i], result[j] = result[j], result[i]
-	}
-
+	result = result[1:]
+	slices.Reverse(result)
 	return result
 }
 
@@ -260,19 +377,3 @@ func (wt *WordTokenizer) revertAbbreviations(tokens []string) []string {
 	}
 	return tokens
 }
-
-/*
-Example usage:
-
-	tokenizer, err := NewWordTokenizer("words.dat", "verbs.dat", true, false, false, false, false, false, false, false)
-		if err != nil {
-			fmt.Println("Error initializing tokenizer:", err)
-			return
-		}
-
-		// Tokenize a sample text
-		text := "این جمله (خیلی) پیچیده نیست!!!"
-		tokens := tokenizer.Tokenize(text)
-		fmt.Println(tokens)
-
-*/
