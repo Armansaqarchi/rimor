@@ -8,30 +8,26 @@ import (
 
 type Parser struct {
 	runeGroups []rune
-	Input *preprocessing.TkDocumentCollection
-	Out segment.Segment
+	Out *segment.Segment
 }
 
 
-func NewParser(groups int, Input *preprocessing.TkDocumentCollection){
+func NewParser(groups int, Out *segment.Segment) Parser{
 	criterion := consts.Criterion
 	length := len(criterion)
 	step :=  length / groups
 
 	parser := Parser{
 		runeGroups: make([]rune, 0),
-		Input: Input,
-		Out: segment.Segment{
-			Fragments: make([]*segment.Fragment, 0),
-		},
+		Out: Out,
 	}	
 	for i := 1; i <= groups + 1; i++{
 		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(groups * step, length) - 1])
 	}
 }
 
-func(p *Parser) Serve() {
-	for _, d := range p.Input.DocList{
+func(p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
+	for _, d := range Input.DocList{
 		for _, t := range d.TokenzedDocContent {
 			p.AddTokenToFragment(t, int64(d.Id))
 		}

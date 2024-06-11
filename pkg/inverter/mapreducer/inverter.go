@@ -8,26 +8,21 @@ import (
 )
 
 type Inverter struct {
-	Input *segment.Segment
-	Out xindex.Xindex
+	Out *xindex.Xindex
 }
 
-
-func NewInverter(input *segment.Segment) *Inverter{
+func NewInverter(out *xindex.Xindex) *Inverter{
 	return &Inverter{
-		Input: input,
-		Out: xindex.Xindex{
-			Records: make([]record.Recorder, 0),
-		},
+		Out: out,
 	}
 }
 
 
-func (inv *Inverter) Serve() {
+func (inv *Inverter) Serve(Input *segment.Segment) {
 	combinedFragment := segment.Fragment{
 		Pairs: make([]*segment.Pair, 0),
 	}
-	for _, frag := range inv.Input.Fragments {
+	for _, frag := range Input.Fragments {
 		combinedFragment.Pairs = append(combinedFragment.Pairs, frag.Pairs...)
 	}
 	sort.Sort(combinedFragment)
