@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	WORDS_PATH = "words.dat"
-	VERBS_PATH = "verbs.dat"
+	WORDS_PATH = "./pkg/preprocessing/tokenizer/words.dat"
+	VERBS_PATH = "./pkg/preprocessing/tokenizer/verbs.dat"
 )
 
 // WordTokenizer defines the tokenizer struct.
@@ -49,6 +49,9 @@ func NewWordTokenizer(
 	joinVerbParts, joinAbbreviations, separateEmoji, replaceLinks,
 	replaceIDs, replaceEmails, replaceNumbers, replaceHashtags bool,
 ) (*WordTokenizer, error) {
+
+	
+
 	tokenizer := &WordTokenizer{
 		joinVerbParts:      joinVerbParts,
 		joinAbbreviations:  joinAbbreviations,
@@ -71,6 +74,8 @@ func NewWordTokenizer(
 		verbe:              make(map[string]bool),
 		abbreviations:      make(map[string]string),
 	}
+
+
 
 	tokenizer.beforeVerbs = map[string]bool{
 		"خواهم":   true,

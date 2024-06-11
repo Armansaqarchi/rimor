@@ -21,11 +21,8 @@ type Document struct {
 	Category string 
 }
 
-type Documents struct {
-	DocumentList []Document
-}
 
-func (ds *Documents) UnmarshalJSON(d []byte) error {
+func (ds *DocumentCollection) UnmarshalJSON(d []byte) error {
 
 	var m map[string]Document
 	if err := json.Unmarshal(d, &m); err != nil {
@@ -36,7 +33,7 @@ func (ds *Documents) UnmarshalJSON(d []byte) error {
 		if err != nil {
 			return fmt.Errorf("failed to convert string id into integer id, err : %s", err.Error())
 		}
-		ds.DocumentList = append(ds.DocumentList, Document{
+		ds.DocList = append(ds.DocList, Document{
 			ID: id,
 			Title: v.Title,
 			Content: v.Content,

@@ -1,59 +1,107 @@
 package mapreducer
 
 import (
-	"sync"
-	preprocessing "rimor/pkg/preprocessing"
+	record "rimor/pkg/dictionary/record"
+	index "rimor/pkg/dictionary/xindex"
 	segment "rimor/pkg/inverter/mapreducer/segment"
+	preprocessing "rimor/pkg/preprocessing"
+	"sync"
 )
 
 
 
 type Master struct {
-	Splits int
+	splits int
+	parsersNum int
+	invertersNum int
 	Segments []*segment.Segment
 	wg *sync.WaitGroup
-	parsers int
-	inverters int
+	inverters []Inverter
+}
+
+
+func NewMaster(invertersNum int, splits int, parsersNum int) *Master{
+	m := Master{
+		splits: splits,
+		invertersNum: invertersNum,
+		parsersNum: parsersNum,
+	}
+	for i := 0; i< parsersNum; i++ {
+		s := segment.Segment{}
+		for i := 0; i < invertersNum; i++{
+			f := segment.Fragment{}
+			f.Pairs = make([]*segment.Pair, 0)
+			s.Fragments = append(s.Fragments, &f)
+		}
+		m.Segments = append(m.Segments, &s)
+	}
+	m.wg = &sync.WaitGroup{}
+	for i := 0; i < m.invertersNum; i++ {
+		m.inverters = append(m.inverters, NewInverter())
+	}
+	return &m
 }
 
 
 
 
-func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) {
 
-	var splits chan *preprocessing.TkDocumentCollection
+func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) index.Xindex{
 
-	for i := 0; i < m.Splits; i++ {
+	var splits chan *preprocessing.TkDocumentCollection = make(chan *preprocessing.TkDocumentCollection, 10)
+	for i := 0; i < m.parsersNum; i++ {
 		m.wg.Add(1)
-		p := NewParser(
-			m.inverters,
-			m.Segments[i],
-		)
-		go func(splits chan *preprocessing.TkDocumentCollection) {
+		go func(splits chan *preprocessing.TkDocumentCollection, order int) {
+			p := NewParser(
+				m.invertersNum,
+				m.Segments[order],
+			)
+			defer m.wg.Done()
 			for split := range splits {
 				p.Serve(split)
 			}
-		}(splits)
+		}(splits, i)
 	}
 	documentsLen := len(tk.DocList)
-	splitLen :=  documentsLen / m.Splits
-	for i := 0; i < m.Splits; i++ {
+	splitLen :=  documentsLen / m.splits
+	for i := 0; i < m.splits; i++ {
 		split := tk.DocList[i * splitLen: (i + 1) * splitLen]
 		splits <- &preprocessing.TkDocumentCollection{
 			DocList: split,
 		}
 	}
-	if splitLen * m.Splits < documentsLen{
-		split := tk.DocList[splitLen * m.Splits: documentsLen]
+
+	if splitLen * m.splits < documentsLen{
+		split := tk.DocList[splitLen * m.splits: documentsLen]
 		splits <- &preprocessing.TkDocumentCollection{
 			DocList: split,
 		}
 	}
 
+	close(splits)
+	m.wg.Wait()
+	for i := 0; i < len(m.inverters); i++ {
+		m.wg.Add(1)
+		go func (order int) {
+			defer m.wg.Done()
+			m.inverters[order].Serve(m.GetVerticalSegment(order))
+		}(i)
+	}
 
+	m.wg.Wait()
+
+
+	x := index.Xindex{
+		Records: make([]record.Recorder, 0),
+		DocNum: len(tk.DocList),
+	}
+
+	for i := 0; i < len(m.inverters); i++ {
+		x.Records = append(x.Records, m.inverters[i].Out.Records...) 
+	}
 	
 
-
+	return x
 }
 
 
@@ -74,13 +122,13 @@ this actually maintains hierarchial implementation so that inverter workers coul
 Segment to parse instead of list of segments that not all of them are used
 
 */
-func (m *Master) GetVerticalSegment(num int) *Segment{
-	if num >= len(sm.Segments[0].Fragments) {
+func (m *Master) GetVerticalSegment(num int) *segment.Segment{
+	if num >= len(m.Segments[0].Fragments) {
 		return nil
 	}
-	segment := Segment{}
-	for i := 0; i < len(sm.Segments); i++ {
-		segment.Fragments = append(segment.Fragments, sm.Segments[i].Fragments[num]) 
+	segment := segment.Segment{}
+	for i := 0; i < len(m.Segments); i++ {
+		segment.Fragments = append(segment.Fragments, m.Segments[i].Fragments[num]) 
 	}
 	return &segment
 }

@@ -8,7 +8,7 @@ import (
 
 
 func applyNormalizingMap(normalizer map[string] string, doc Document) Document {
-	var processedContent []byte = []byte(doc.DocContent)
+	var processedContent []byte = []byte(doc.Content)
 
 	for key, value := range normalizer {
 		normalizingCandidateMatcher := regexp.MustCompile(strings.Join(strings.Split(value, " "), "|"))
@@ -17,9 +17,9 @@ func applyNormalizingMap(normalizer map[string] string, doc Document) Document {
 	}
 
 	return Document {
-		Id: doc.Id,
-		DocUrl: doc.DocUrl,
-		DocContent: string(processedContent),
+		ID: doc.ID,
+		Url: doc.Url,
+		Content: string(processedContent),
 	}
 }
 
@@ -64,13 +64,13 @@ func NewPunctuationRemover() puncutationRemover {
 func (normalizer *puncutationRemover) Process(document Document) Document {
 	normalizingCandidateMatcher := regexp.MustCompile(strings.Join(strings.Split(normalizer.knownPunctuatuions, " "), "|"))
 		
-	processedContent := normalizingCandidateMatcher.ReplaceAll([]byte(document.DocContent), []byte(""))
+	processedContent := normalizingCandidateMatcher.ReplaceAll([]byte(document.Content), []byte(""))
 	
 	return Document {
-		Id: document.Id,
-		DocUrl: document.DocUrl,
-		DocContent: string(processedContent),
-	} 
+		ID: document.ID,
+		Url: document.Url,
+		Content: string(processedContent),
+	}
 }
 
 type specialArabicPhraseNormalizer struct {

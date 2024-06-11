@@ -13,6 +13,7 @@ type Parser struct {
 
 
 func NewParser(groups int, Out *segment.Segment) Parser{
+	groups--;
 	criterion := consts.Criterion
 	length := len(criterion)
 	step :=  length / groups
@@ -24,6 +25,8 @@ func NewParser(groups int, Out *segment.Segment) Parser{
 	for i := 1; i <= groups + 1; i++{
 		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(groups * step, length) - 1])
 	}
+
+	return parser
 }
 
 func(p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {

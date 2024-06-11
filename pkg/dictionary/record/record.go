@@ -8,6 +8,7 @@ type Recorder interface {
 	GetWeight(int) float64
 	GetLast() IPostingListElem
 	AddToPosting(IPostingListElem)
+	GetPostingList() IPostingListElem
 }
 
 
@@ -20,12 +21,13 @@ type Record struct {
 }
 
 
-func NewRecord(term string) Recorder{
+func NewRecord(term string, DocID int64) Recorder{
+	DocRef := NewPostingListElem(DocID, nil)
 	return &Record{
 		Term: term,
 		DF: 0,
-		PostingList: nil,
-		Last: nil,
+		PostingList: DocRef,
+		Last: DocRef,
 	}
 }
 
@@ -60,4 +62,8 @@ func (r *Record) AddToPosting(elm IPostingListElem) {
 	}
 	r.Last.SetNextElem(elm)
 	r.Last = elm
+}
+
+func (r *Record) GetPostingList() IPostingListElem{
+	return r.PostingList
 }

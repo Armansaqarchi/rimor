@@ -11,9 +11,12 @@ type Inverter struct {
 	Out *xindex.Xindex
 }
 
-func NewInverter(out *xindex.Xindex) *Inverter{
-	return &Inverter{
-		Out: out,
+
+func NewInverter() Inverter{
+	return Inverter{
+		Out: &xindex.Xindex{
+			Records: make([]record.Recorder, 0),
+		},
 	}
 }
 
@@ -26,9 +29,7 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 		combinedFragment.Pairs = append(combinedFragment.Pairs, frag.Pairs...)
 	}
 	sort.Sort(combinedFragment)
-	inv.Out.Records = append(inv.Out.Records, record.NewRecord(
-		combinedFragment.Pairs[0].Term,
-	))
+	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc)) 
 	currentRec := inv.Out.Records[0]
 	for _, t := range combinedFragment.Pairs[1:] {
 		if t.Term == currentRec.GetTerm() {
@@ -41,6 +42,7 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 		}
 		currentRec = record.NewRecord(
 			t.Term,
+			t.Doc,
 		)
 		inv.Out.Records = append(inv.Out.Records, currentRec)
 	}
