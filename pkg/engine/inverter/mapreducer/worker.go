@@ -1,8 +1,8 @@
 package mapreducer
 
 import (
-	"rimor/pkg/inverter/mapreducer/segment"
-	preprocessing "rimor/pkg/preprocessing"
+	"rimor/pkg/engine/inverter/mapreducer/segment"
+	preprocessing "rimor/pkg/engine/preprocessing"
 )
 
 type IParser interface {

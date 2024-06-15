@@ -1,9 +1,9 @@
 package mapreducer
 
 import (
-	"rimor/pkg/dictionary/record"
-	"rimor/pkg/dictionary/xindex"
-	"rimor/pkg/inverter/mapreducer/segment"
+	"rimor/pkg/engine/dictionary/record"
+	"rimor/pkg/engine/dictionary/xindex"
+	"rimor/pkg/engine/inverter/mapreducer/segment"
 	"sort"
 )
 
@@ -37,6 +37,7 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 				currentRec.GetLast().IncreaseTF()
 			} else{
 				currentRec.AddToPosting(record.NewPostingListElem(t.Doc, nil))
+				currentRec.IncreaseDF()
 			}
 			continue
 		}

@@ -3,11 +3,11 @@ package record
 
 type Recorder interface {
 	GetTerm() string
-	GetDF() int
-	GetTF(int) int
+	GetDF() int64
 	GetWeight(int) float64
 	GetLast() IPostingListElem
 	AddToPosting(IPostingListElem)
+	IncreaseDF()
 	GetPostingList() IPostingListElem
 }
 
@@ -15,7 +15,7 @@ type Recorder interface {
 
 type Record struct {
 	Term string
-	DF int // no need to keep weights in float64 which is expensive
+	DF int64 // no need to keep weights in float64 which is expensive
 	PostingList IPostingListElem // points to the first element in posting list
 	Last IPostingListElem
 }
@@ -37,17 +37,13 @@ func (r *Record) GetTerm() string{
 }
 
 
-func (r *Record) GetDF() int{
+func (r *Record) GetDF() int64{
 	return r.DF
 }
 
 
 func (r *Record) GetWeight(int) float64 {
 	return 0.0
-}
-
-func (r *Record) GetTF(int) int {
-	return 0
 }
 
 func (r *Record) GetLast() IPostingListElem {
@@ -66,4 +62,8 @@ func (r *Record) AddToPosting(elm IPostingListElem) {
 
 func (r *Record) GetPostingList() IPostingListElem{
 	return r.PostingList
+}
+
+func (r *Record) IncreaseDF() {
+	r.DF++
 }

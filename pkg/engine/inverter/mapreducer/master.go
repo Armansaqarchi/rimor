@@ -1,10 +1,10 @@
 package mapreducer
 
 import (
-	record "rimor/pkg/dictionary/record"
-	index "rimor/pkg/dictionary/xindex"
-	segment "rimor/pkg/inverter/mapreducer/segment"
-	preprocessing "rimor/pkg/preprocessing"
+	record "rimor/pkg/engine/dictionary/record"
+	index "rimor/pkg/engine/dictionary/xindex"
+	segment "rimor/pkg/engine/inverter/mapreducer/segment"
+	preprocessing "rimor/pkg/engine/preprocessing"
 	"sync"
 )
 
@@ -80,6 +80,7 @@ func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) index.Xindex{
 
 	close(splits)
 	m.wg.Wait()
+
 	for i := 0; i < len(m.inverters); i++ {
 		m.wg.Add(1)
 		go func (order int) {
@@ -93,13 +94,16 @@ func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) index.Xindex{
 
 	x := index.Xindex{
 		Records: make([]record.Recorder, 0),
-		DocNum: len(tk.DocList),
+		DocNum: int64(len(tk.DocList)),
 	}
 
 	for i := 0; i < len(m.inverters); i++ {
 		x.Records = append(x.Records, m.inverters[i].Out.Records...) 
 	}
 	
+	for _, td := range tk.DocList {
+		x.DocLengths = append(x.DocLengths, int64(len(td.TokenzedDocContent)))
+	}
 
 	return x
 }

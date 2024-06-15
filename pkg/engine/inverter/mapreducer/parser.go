@@ -2,8 +2,8 @@ package mapreducer
 
 import (
 	consts "rimor/pkg/consts"
-	segment "rimor/pkg/inverter/mapreducer/segment"
-	preprocessing "rimor/pkg/preprocessing"
+	segment "rimor/pkg/engine/inverter/mapreducer/segment"
+	preprocessing "rimor/pkg/engine/preprocessing"
 )
 
 type Parser struct {
