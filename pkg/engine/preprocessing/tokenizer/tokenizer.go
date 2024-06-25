@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	WORDS_PATH = "./pkg/preprocessing/tokenizer/words.dat"
-	VERBS_PATH = "./pkg/preprocessing/tokenizer/verbs.dat"
+	WORDS_PATH = "./pkg/engine/preprocessing/tokenizer/words.dat"
+	VERBS_PATH = "./pkg/engine/preprocessing/tokenizer/verbs.dat"
 )
 
 // WordTokenizer defines the tokenizer struct.

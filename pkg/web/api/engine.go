@@ -10,7 +10,7 @@ import (
 
 
 type EngineHandler struct {
-	Engine engine.Engine
+	Engine *engine.Engine
 }
 
 var e *EngineHandler
@@ -28,7 +28,7 @@ func GetEngineHandler() *EngineHandler{
 
 func newEngineHandler() *EngineHandler{
 	return &EngineHandler{
-		// TODO
+		Engine: engine.NewEngine(),
 	}
 }
 

@@ -2,21 +2,77 @@ package engine
 
 import (
 	"container/heap"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	consts "rimor/pkg/consts"
 	"rimor/pkg/engine/dictionary/xindex"
 	"rimor/pkg/engine/inverter/mapreducer"
+	MReduce "rimor/pkg/engine/inverter/mapreducer"
 	preprocessing "rimor/pkg/engine/preprocessing"
+	tokenizer "rimor/pkg/engine/preprocessing/tokenizer"
 	"rimor/pkg/scoring"
-
 )
 
 
 type Engine struct {
-	DocumentCollection preprocessing.DocumentCollection
+	DocumentCollection *preprocessing.DocumentCollection
 	Preprocessor preprocessing.Preprocessor
-	Constructor mapreducer.Master
-	Index		xindex.Xindex
+	Constructor *mapreducer.Master
+	Index		*xindex.Xindex
 	K 			int
+}
+
+
+func readDocumentCollection(documentCollectionPath string) (preprocessing.DocumentCollection, error) {
+	documentCollectionAsJsonBytes, err := os.ReadFile(documentCollectionPath)
+	if err != nil {
+		return preprocessing.DocumentCollection{}, err
+	}
+
+
+	var documentCollection preprocessing.DocumentCollection
+	if err := json.Unmarshal(documentCollectionAsJsonBytes, &documentCollection); err != nil {
+		return preprocessing.DocumentCollection{}, err
+	}
+
+	return documentCollection, nil
+}
+
+func NewEngine() *Engine{
+	docCollection, err := readDocumentCollection(consts.COLLECTION_PATH)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	TokenizedCollection := preprocessing.TkDocumentCollection{
+		DocList: make([]preprocessing.TkDocument, 0),
+	}
+	tokenizer, err := tokenizer.NewWordTokenizer(tokenizer.WORDS_PATH, tokenizer.VERBS_PATH, false, false, false, false, false, false, false, false)
+	if err != nil {
+		log.Fatalf("failed to instantiate the tokenizer, err : %s", err.Error())
+	}
+	for _, col := range docCollection.DocList {
+		TokenizedCollection.DocList = append(TokenizedCollection.DocList, preprocessing.TkDocument{
+			Id: col.ID,
+			TokenzedDocContent : tokenizer.Tokenize(col.Content),
+			DocUrl: col.Url,
+		}) 
+	}
+
+	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
+	indx := MapReducer.MapReduce(TokenizedCollection)
+
+	engine := Engine{
+		DocumentCollection: &docCollection,
+		Preprocessor: preprocessing.Preprocessor{},
+		Constructor: MapReducer,
+		Index: indx,
+		K: 30,
+	}
+
+	return &engine
 }
 
 

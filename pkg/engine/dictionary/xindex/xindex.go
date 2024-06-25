@@ -1,7 +1,6 @@
 package xindex
 
 import (
-	"encoding/json"
 	"fmt"
 	"rimor/pkg/engine/dictionary/record"
 	"rimor/pkg/utils/errors"
@@ -67,9 +66,6 @@ func (x *Xindex) BinarySearchRecord(t string) (record.Recorder, error){
 } 
 
 
-func (x Xindex) MarshalJSON() ([]byte, error){
-	return json.Marshal(x.Records)
-}
 
 
 
