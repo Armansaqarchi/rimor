@@ -19,6 +19,7 @@ import (
 type Engine struct {
 	DocumentCollection *preprocessing.DocumentCollection
 	Preprocessor preprocessing.Preprocessor
+	Tokenizer *tokenizer.WordTokenizer
 	Constructor *mapreducer.Master
 	Index		*xindex.Xindex
 	K 			int
@@ -67,6 +68,7 @@ func NewEngine() *Engine{
 	engine := Engine{
 		DocumentCollection: &docCollection,
 		Preprocessor: preprocessing.Preprocessor{},
+		Tokenizer: tokenizer,
 		Constructor: MapReducer,
 		Index: indx,
 		K: 30,
@@ -108,8 +110,35 @@ func (e *Engine) Score(q Query) ([]float64, error){
 
 func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 
+
+	tokenizedQuery := e.Tokenizer.Tokenize(tq)
+	queryLen := len(tokenizedQuery)
+	queryTermMap := make(map[string] int8)
+
+
+	vectorizedQuery := make([]VectorElem, queryLen)
+
+	for _, token := range tokenizedQuery {
+		val, contains := queryTermMap[token]
+		if contains {
+			queryTermMap[token] = val +1
+		} else {
+			queryTermMap[token] = 0 
+		}	
+	}
+
+	for idx, token := range tokenizedQuery {
+		tokenTF := queryTermMap[token]
+		vectorizedQuery[idx] = VectorElem{
+			Term: token,
+			Value: int64(tokenTF),
+		}
+	}
+
 	// preprocessing steps for query
-	q := Query{} // this has to be populated after preprocessing step on text query
+	q := Query{
+		Vector: vectorizedQuery,
+	} // this has to be populated after preprocessing step on text query
 
 	scores, err := e.Score(q)
 	if err != nil {
