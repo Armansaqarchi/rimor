@@ -1,6 +1,7 @@
 package xindex
 
 import (
+	"encoding/json"
 	"fmt"
 	"rimor/pkg/engine/dictionary/record"
 	"rimor/pkg/utils/errors"
@@ -18,6 +19,7 @@ type Xindex struct {
 	DocLengths []int64
 	Records []record.Recorder
 	DocNum int64
+	ChampionNum int
 }
 
 
@@ -63,6 +65,13 @@ func (x *Xindex) BinarySearchRecord(t string) (record.Recorder, error){
 
 	return nil, fmt.Errorf("something went wrong while doing binary search")
 } 
+
+
+func (x Xindex) MarshalJSON() ([]byte, error){
+	return json.Marshal(x.Records)
+}
+
+
 
 
 

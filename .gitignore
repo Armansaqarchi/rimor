@@ -117,5 +117,6 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/goland
 
 data/news.json
+data/tmp.json
 /collection
 go.mod

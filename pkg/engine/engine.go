@@ -8,15 +8,15 @@ import (
 	preprocessing "rimor/pkg/engine/preprocessing"
 	"rimor/pkg/scoring"
 
-	"golang.org/x/tools/go/analysis/passes/appends"
 )
 
 
 type Engine struct {
+	DocumentCollection preprocessing.DocumentCollection
 	Preprocessor preprocessing.Preprocessor
 	Constructor mapreducer.Master
 	Index		xindex.Xindex
-	K 		int
+	K 			int
 }
 
 
@@ -50,7 +50,11 @@ func (e *Engine) Score(q Query) ([]float64, error){
 }
 
 
-func (e *Engine) Query(q Query)([]int, error) {
+func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
+
+	// preprocessing steps for query
+	q := Query{} // this has to be populated after preprocessing step on text query
+
 	scores, err := e.Score(q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process query, err : %s", err.Error())
@@ -64,17 +68,18 @@ func (e *Engine) Query(q Query)([]int, error) {
 	}
 	heap.Init(&sh)
 
-	var Bests []int
+	DocCollection := preprocessing.DocumentCollection{}
+
 	for i := 0; i < e.K; i++ {
 		ds , ok:= heap.Pop(&sh).(DocumentScore)
 		if !ok {
 			return nil, fmt.Errorf("something went wrong while evaluation of documents")
 		}
-		Bests = append(Bests, ds.DocID)
+		DocCollection.DocList = append(DocCollection.DocList, e.DocumentCollection.DocList[ds.DocID])
 	}
-	return Bests, nil
-}
+	return &DocCollection, nil
 
+}
 
 
 type DocumentScore struct {

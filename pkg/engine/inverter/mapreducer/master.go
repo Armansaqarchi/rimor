@@ -43,10 +43,16 @@ func NewMaster(invertersNum int, splits int, parsersNum int) *Master{
 }
 
 
+func (m *Master) CreateIndex(tk preprocessing.TkDocumentCollection) *index.Xindex{
+	x := m.MapReduce(tk)
+	for _, record := range x.Records {
+		record.CreateChampions()
+	}
+	return x
+}
 
 
-
-func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) index.Xindex{
+func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) *index.Xindex{
 
 	var splits chan *preprocessing.TkDocumentCollection = make(chan *preprocessing.TkDocumentCollection, 10)
 	for i := 0; i < m.parsersNum; i++ {
@@ -105,7 +111,7 @@ func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) index.Xindex{
 		x.DocLengths = append(x.DocLengths, int64(len(td.TokenzedDocContent)))
 	}
 
-	return x
+	return &x
 }
 
 

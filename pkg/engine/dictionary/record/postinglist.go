@@ -1,48 +1,43 @@
 package record
 
-
-type IPostingListElem interface {
+type IPostingElem interface {
 	GetTF() int64
 	GetDocID() int64
-	GetNextElem() IPostingListElem
-	SetNextElem(IPostingListElem)
+	GetNextElem() IPostingElem
+	SetNextElem(IPostingElem)
 	IncreaseTF()
 }
 
-
-type PostingListElem struct {
-	DocID 	int64
-	TF  	int64
-	NextElem IPostingListElem
+type PostingElem struct {
+	DocID    int64
+	TF       int64
+	NextElem IPostingElem
 }
 
-
-func NewPostingListElem(docID int64, next IPostingListElem) IPostingListElem {
-	return &PostingListElem{
-		TF: 1,
-		DocID: docID,
+func NewPostingListElem(docID int64, next IPostingElem) IPostingElem {
+	return &PostingElem{
+		TF:       1,
+		DocID:    docID,
 		NextElem: next,
 	}
 }
 
-
-func (ple *PostingListElem) GetTF() int64{
+func (ple *PostingElem) GetTF() int64 {
 	return ple.TF
 }
 
-func (ple *PostingListElem) GetDocID() int64 {
+func (ple *PostingElem) GetDocID() int64 {
 	return ple.DocID
 }
 
-func (ple *PostingListElem) GetNextElem() IPostingListElem{
+func (ple *PostingElem) GetNextElem() IPostingElem {
 	return ple.NextElem
 }
 
-
-func (ple *PostingListElem) SetNextElem(elm IPostingListElem) {
+func (ple *PostingElem) SetNextElem(elm IPostingElem) {
 	ple.NextElem = elm
 }
 
-func (ple *PostingListElem) IncreaseTF() {
+func (ple *PostingElem) IncreaseTF() {
 	ple.TF++
 }
