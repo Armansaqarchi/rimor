@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -12,8 +11,6 @@ import (
 	index "rimor/pkg/engine/dictionary/xindex"
 	"rimor/pkg/web/routes"
 )
-
-var indx *index.Xindex
 
 func main() {
 	// data_present := flag.Bool("present", false, "this is mainly used for restoring of index when index has previously been calculated")
@@ -44,6 +41,7 @@ func main() {
 	// 	}
 	// 	fmt.Print("\n")
 	// }
+
 
 }
 

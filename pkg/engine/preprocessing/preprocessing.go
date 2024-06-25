@@ -28,13 +28,14 @@ func (ds *DocumentCollection) UnmarshalJSON(d []byte) error {
 	if err := json.Unmarshal(d, &m); err != nil {
 		log.Printf("failed to parse raw string into map, err : %s", err.Error())
 	}
-	for k, v := range m {
-		id, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			return fmt.Errorf("failed to convert string id into integer id, err : %s", err.Error())
+	for i := 0; i < len(m); i++ {
+		id := strconv.Itoa(i)
+		v, ok := m[id]
+		if !ok {
+			return fmt.Errorf("failed to get the docuemnts")
 		}
 		ds.DocList = append(ds.DocList, Document{
-			ID: id,
+			ID: int64(i),
 			Title: v.Title,
 			Content: v.Content,
 			Date: v.Date,

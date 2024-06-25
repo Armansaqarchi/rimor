@@ -42,7 +42,7 @@ func (x *Xindex) BinarySearchRecord(t string) (record.Recorder, error){
 	if x.Records == nil {
 		return nil, fmt.Errorf("failed to get the target record, Records list are empty")
 	}
-	s, e := 0, len(x.Records)
+	s, e := 0, len(x.Records)-1
 
 
 	for s <= e {
@@ -55,9 +55,9 @@ func (x *Xindex) BinarySearchRecord(t string) (record.Recorder, error){
 		} else {
 			mid := (s + e) / 2
 			if t >= x.Records[mid].GetTerm(){
-				e = mid
+				s = mid+1
 			} else {
-				s = mid
+				e = mid-1
 			}
 		}
 	}

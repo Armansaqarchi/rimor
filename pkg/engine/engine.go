@@ -3,6 +3,7 @@ package engine
 import (
 	"container/heap"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	preprocessing "rimor/pkg/engine/preprocessing"
 	tokenizer "rimor/pkg/engine/preprocessing/tokenizer"
 	"rimor/pkg/scoring"
+	errors_util "rimor/pkg/utils/errors"
 )
 
 
@@ -27,17 +29,16 @@ type Engine struct {
 
 
 func readDocumentCollection(documentCollectionPath string) (preprocessing.DocumentCollection, error) {
-	documentCollectionAsJsonBytes, err := os.ReadFile(documentCollectionPath)
+	docFile, err := os.Open(documentCollectionPath)
 	if err != nil {
 		return preprocessing.DocumentCollection{}, err
 	}
-
-
 	var documentCollection preprocessing.DocumentCollection
-	if err := json.Unmarshal(documentCollectionAsJsonBytes, &documentCollection); err != nil {
+
+	dec := json.NewDecoder(docFile)
+	if err := dec.Decode(&documentCollection); err != nil {
 		return preprocessing.DocumentCollection{}, err
 	}
-
 	return documentCollection, nil
 }
 
@@ -92,7 +93,12 @@ func (e *Engine) Score(q Query) ([]float64, error){
 	scores := make([]float64, e.Index.DocNum)
 	for _, t := range q.Vector{
 		r, err := e.Index.BinarySearchRecord(t.Term)
+		if errors.Is(err, errors_util.RecordNotFound{}){
+			fmt.Print("term not found\n")
+			continue
+		}
 		if err != nil {
+			fmt.Print(err.Error())
 			return nil, err
 		}
 		p := r.GetPostingList()
@@ -110,36 +116,32 @@ func (e *Engine) Score(q Query) ([]float64, error){
 
 func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 
-
+	fmt.Print("processing query...\n")
 	tokenizedQuery := e.Tokenizer.Tokenize(tq)
-	queryLen := len(tokenizedQuery)
 	queryTermMap := make(map[string] int8)
+	fmt.Print("vectorizing query\n")
 
-
-	vectorizedQuery := make([]VectorElem, queryLen)
+	vectorizedQuery := []VectorElem{}
 
 	for _, token := range tokenizedQuery {
 		val, contains := queryTermMap[token]
 		if contains {
 			queryTermMap[token] = val +1
 		} else {
-			queryTermMap[token] = 0 
+			queryTermMap[token] = 1
 		}	
 	}
 
-	for idx, token := range tokenizedQuery {
-		tokenTF := queryTermMap[token]
-		vectorizedQuery[idx] = VectorElem{
-			Term: token,
-			Value: int64(tokenTF),
-		}
+	for k, v := range queryTermMap{
+		vectorizedQuery = append(vectorizedQuery, VectorElem{
+			Term: k,
+			Value: int64(v),
+		})
 	}
 
-	// preprocessing steps for query
 	q := Query{
 		Vector: vectorizedQuery,
-	} // this has to be populated after preprocessing step on text query
-
+	}
 	scores, err := e.Score(q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process query, err : %s", err.Error())
@@ -158,7 +160,7 @@ func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 	for i := 0; i < e.K; i++ {
 		ds , ok:= heap.Pop(&sh).(DocumentScore)
 		if !ok {
-			return nil, fmt.Errorf("something went wrong while evaluation of documents")
+			return nil, fmt.Errorf("something went wrong while evaluating documents")
 		}
 		DocCollection.DocList = append(DocCollection.DocList, e.DocumentCollection.DocList[ds.DocID])
 	}

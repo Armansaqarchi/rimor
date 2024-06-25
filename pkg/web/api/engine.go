@@ -7,8 +7,6 @@ import (
 )
 
 
-
-
 type EngineHandler struct {
 	Engine *engine.Engine
 }
@@ -19,10 +17,7 @@ func GetEngineHandler() *EngineHandler{
 	if e != nil {
 		return e
 	}
-
 	return newEngineHandler()
-
-
 }
 
 
@@ -52,6 +47,4 @@ func (e EngineHandler) Query(ctx *fiber.Ctx) error{
 			},
 		)
 	}
-
-	
 }
