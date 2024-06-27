@@ -7,8 +7,8 @@ import (
 )
 
 
-func applyNormalizingMap(normalizer map[string] string, doc Document) Document {
-	var processedContent []byte = []byte(doc.Content)
+func applyNormalizingMap(normalizer map[string] string, text string) string {
+	var processedContent []byte = []byte(text)
 
 	for key, value := range normalizer {
 		normalizingCandidateMatcher := regexp.MustCompile(strings.Join(strings.Split(value, " "), "|"))
@@ -16,11 +16,7 @@ func applyNormalizingMap(normalizer map[string] string, doc Document) Document {
 		processedContent = normalizingCandidateMatcher.ReplaceAll(processedContent, []byte(key))
 	}
 
-	return Document {
-		ID: doc.ID,
-		Url: doc.Url,
-		Content: string(processedContent),
-	}
+	return string(processedContent)
 }
 
 type unicodeReplacementPersianNormalizer struct {
@@ -33,8 +29,8 @@ func NewUnicodeReplacementPersianNormalizer() unicodeReplacementPersianNormalize
 	}
 }
 
-func (normalizer *unicodeReplacementPersianNormalizer) Process(document Document) Document{
-	return applyNormalizingMap(normalizer.persianCharsNormalizationMap, document)
+func (normalizer *unicodeReplacementPersianNormalizer) Process(text string) string {
+	return applyNormalizingMap(normalizer.persianCharsNormalizationMap, text)
 }
 
 type persianDigitNormalizer struct {
@@ -47,8 +43,8 @@ func NewPersianDigitNormalizer() persianDigitNormalizer {
 	}
 }
 
-func (normalizer *persianDigitNormalizer) Process(document Document) Document{
-	return applyNormalizingMap(normalizer.persianDigitsNormalizationMap, document)
+func (normalizer *persianDigitNormalizer) Process(text string) string {
+	return applyNormalizingMap(normalizer.persianDigitsNormalizationMap, text)
 }
 
 type puncutationRemover struct {
@@ -61,16 +57,13 @@ func NewPunctuationRemover() puncutationRemover {
 	}
 }
 
-func (normalizer *puncutationRemover) Process(document Document) Document {
+func (normalizer *puncutationRemover) Process(text string) string {
 	normalizingCandidateMatcher := regexp.MustCompile(strings.Join(strings.Split(normalizer.knownPunctuatuions, " "), "|"))
 		
-	processedContent := normalizingCandidateMatcher.ReplaceAll([]byte(document.Content), []byte(""))
+	processedContent := normalizingCandidateMatcher.ReplaceAll([]byte(text), []byte(""))
 	
-	return Document {
-		ID: document.ID,
-		Url: document.Url,
-		Content: string(processedContent),
-	}
+	return string(processedContent)
+	
 }
 
 type specialArabicPhraseNormalizer struct {
@@ -83,8 +76,8 @@ func NewspecialArabicPhraseNormalizer() specialArabicPhraseNormalizer {
 	}
 }
 
-func (normalizer *specialArabicPhraseNormalizer) Process(document Document) Document {
-	return applyNormalizingMap(normalizer.specialArabicPhraseMap, document)
+func (normalizer *specialArabicPhraseNormalizer) Process(text string) string {
+	return applyNormalizingMap(normalizer.specialArabicPhraseMap, text)
 }
 
 type mostUsedWordRemover struct {

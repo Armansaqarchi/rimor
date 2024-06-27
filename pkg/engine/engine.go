@@ -55,10 +55,24 @@ func NewEngine() *Engine{
 	if err != nil {
 		log.Fatalf("failed to instantiate the tokenizer, err : %s", err.Error())
 	}
+
+
+	var arabicPhrase = preprocessing.NewspecialArabicPhraseNormalizer()
+	var persianDigit = preprocessing.NewPersianDigitNormalizer()
+	var unicodeRep = preprocessing.NewUnicodeReplacementPersianNormalizer()
+	
+	preprocessor := preprocessing.NewPreprocessor([]preprocessing.PreprocessingStep{
+		&arabicPhrase,
+		&persianDigit,
+		&unicodeRep,
+	})
+
 	for _, col := range docCollection.DocList {
+		col.Content = preprocessor.Process(col.Content)
+		tokenized := tokenizer.Tokenize(col.Content)
 		TokenizedCollection.DocList = append(TokenizedCollection.DocList, preprocessing.TkDocument{
 			Id: col.ID,
-			TokenzedDocContent : tokenizer.Tokenize(col.Content),
+			TokenzedDocContent : tokenized,
 			DocUrl: col.Url,
 		}) 
 	}
@@ -68,7 +82,7 @@ func NewEngine() *Engine{
 
 	engine := Engine{
 		DocumentCollection: &docCollection,
-		Preprocessor: preprocessing.Preprocessor{},
+		Preprocessor: preprocessor,
 		Tokenizer: tokenizer,
 		Constructor: MapReducer,
 		Index: indx,
@@ -117,6 +131,7 @@ func (e *Engine) Score(q Query) ([]float64, error){
 func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 
 	fmt.Print("processing query...\n")
+	tq = e.Preprocessor.Process(tq)
 	tokenizedQuery := e.Tokenizer.Tokenize(tq)
 	queryTermMap := make(map[string] int8)
 	fmt.Print("vectorizing query\n")
