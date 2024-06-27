@@ -17,16 +17,14 @@ import (
 	errors_util "rimor/pkg/utils/errors"
 )
 
-
 type Engine struct {
 	DocumentCollection *preprocessing.DocumentCollection
-	Preprocessor preprocessing.Preprocessor
-	Tokenizer *tokenizer.WordTokenizer
-	Constructor *mapreducer.Master
-	Index		*xindex.Xindex
-	K 			int
+	Preprocessor       preprocessing.Preprocessor
+	Tokenizer          *tokenizer.WordTokenizer
+	Constructor        *mapreducer.Master
+	Index              *xindex.Xindex
+	K                  int
 }
-
 
 func readDocumentCollection(documentCollectionPath string) (preprocessing.DocumentCollection, error) {
 	docFile, err := os.Open(documentCollectionPath)
@@ -42,7 +40,7 @@ func readDocumentCollection(documentCollectionPath string) (preprocessing.Docume
 	return documentCollection, nil
 }
 
-func NewEngine() *Engine{
+func NewEngine() *Engine {
 	docCollection, err := readDocumentCollection(consts.COLLECTION_PATH)
 	if err != nil {
 		fmt.Println(err)
@@ -56,25 +54,25 @@ func NewEngine() *Engine{
 		log.Fatalf("failed to instantiate the tokenizer, err : %s", err.Error())
 	}
 
-
 	var arabicPhrase = preprocessing.NewspecialArabicPhraseNormalizer()
 	var persianDigit = preprocessing.NewPersianDigitNormalizer()
 	var unicodeRep = preprocessing.NewUnicodeReplacementPersianNormalizer()
-	
+	var punctuationRemover = preprocessing.NewPunctuationRemover()
 	preprocessor := preprocessing.NewPreprocessor([]preprocessing.PreprocessingStep{
 		&arabicPhrase,
 		&persianDigit,
 		&unicodeRep,
+		&punctuationRemover,
 	})
 
 	for _, col := range docCollection.DocList {
 		col.Content = preprocessor.Process(col.Content)
 		tokenized := tokenizer.Tokenize(col.Content)
 		TokenizedCollection.DocList = append(TokenizedCollection.DocList, preprocessing.TkDocument{
-			Id: col.ID,
-			TokenzedDocContent : tokenized,
-			DocUrl: col.Url,
-		}) 
+			Id:                 col.ID,
+			TokenzedDocContent: tokenized,
+			DocUrl:             col.Url,
+		})
 	}
 
 	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
@@ -82,19 +80,18 @@ func NewEngine() *Engine{
 
 	engine := Engine{
 		DocumentCollection: &docCollection,
-		Preprocessor: preprocessor,
-		Tokenizer: tokenizer,
-		Constructor: MapReducer,
-		Index: indx,
-		K: 30,
+		Preprocessor:       preprocessor,
+		Tokenizer:          tokenizer,
+		Constructor:        MapReducer,
+		Index:              indx,
+		K:                  30,
 	}
 
 	return &engine
 }
 
-
 type VectorElem struct {
-	Term string
+	Term  string
 	Value int64
 }
 
@@ -102,12 +99,11 @@ type Query struct {
 	Vector []VectorElem
 }
 
-
-func (e *Engine) Score(q Query) ([]float64, error){
+func (e *Engine) Score(q Query) ([]float64, error) {
 	scores := make([]float64, e.Index.DocNum)
-	for _, t := range q.Vector{
+	for _, t := range q.Vector {
 		r, err := e.Index.BinarySearchRecord(t.Term)
-		if errors.Is(err, errors_util.RecordNotFound{}){
+		if errors.Is(err, errors_util.RecordNotFound{}) {
 			fmt.Print("term not found\n")
 			continue
 		}
@@ -127,13 +123,12 @@ func (e *Engine) Score(q Query) ([]float64, error){
 	return scores, nil
 }
 
-
-func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
+func (e *Engine) Query(tq string) (*preprocessing.DocumentCollection, error) {
 
 	fmt.Print("processing query...\n")
 	tq = e.Preprocessor.Process(tq)
 	tokenizedQuery := e.Tokenizer.Tokenize(tq)
-	queryTermMap := make(map[string] int8)
+	queryTermMap := make(map[string]int8)
 	fmt.Print("vectorizing query\n")
 
 	vectorizedQuery := []VectorElem{}
@@ -141,15 +136,15 @@ func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 	for _, token := range tokenizedQuery {
 		val, contains := queryTermMap[token]
 		if contains {
-			queryTermMap[token] = val +1
+			queryTermMap[token] = val + 1
 		} else {
 			queryTermMap[token] = 1
-		}	
+		}
 	}
 
-	for k, v := range queryTermMap{
+	for k, v := range queryTermMap {
 		vectorizedQuery = append(vectorizedQuery, VectorElem{
-			Term: k,
+			Term:  k,
 			Value: int64(v),
 		})
 	}
@@ -173,7 +168,7 @@ func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 	DocCollection := preprocessing.DocumentCollection{}
 
 	for i := 0; i < e.K; i++ {
-		ds , ok:= heap.Pop(&sh).(DocumentScore)
+		ds, ok := heap.Pop(&sh).(DocumentScore)
 		if !ok {
 			return nil, fmt.Errorf("something went wrong while evaluating documents")
 		}
@@ -183,20 +178,18 @@ func (e *Engine) Query(tq string)(*preprocessing.DocumentCollection, error) {
 
 }
 
-
 type DocumentScore struct {
-	DocID 	int
-	Score   float64
+	DocID int
+	Score float64
 }
 
 type DocumentHeap []DocumentScore
 
-
-func (d DocumentHeap) Len() int{
+func (d DocumentHeap) Len() int {
 	return len(d)
 }
 
-func (d DocumentHeap) Less(first , second int) bool{
+func (d DocumentHeap) Less(first, second int) bool {
 	return d[first].Score > d[second].Score // this is reversed due to achievement of max heap
 }
 
@@ -204,15 +197,14 @@ func (d DocumentHeap) Swap(first, second int) {
 	d[first], d[second] = d[second], d[first]
 }
 
-
-func (d *DocumentHeap) Push(x any){
+func (d *DocumentHeap) Push(x any) {
 	*d = append(*d, x.(DocumentScore))
 }
 
-func (d *DocumentHeap) Pop() any{
+func (d *DocumentHeap) Pop() any {
 	old := *d
 	n := len(old)
 	p := old[n-1]
-	*d = old[0: n-1]
+	*d = old[0 : n-1]
 	return p
 }
