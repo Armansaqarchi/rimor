@@ -50,12 +50,12 @@ func NewEngine() *Engine {
 	TokenizedCollection := preprocessing.TkDocumentCollection{
 		DocList: make([]preprocessing.TkDocument, 0),
 	}
-	tokenizer, err := tokenizer.NewWordTokenizer(tokenizer.WORDS_PATH, tokenizer.VERBS_PATH, true, false, false, false, false, true, false, false)
+	wordTokenizer, err := tokenizer.NewWordTokenizer(tokenizer.WORDS_PATH, tokenizer.VERBS_PATH, true, false, false, false, false, true, false, false)
 	if err != nil {
-		log.Fatalf("failed to instantiate the tokenizer, err : %s", err.Error())
+		log.Fatalf("failed to instantiate the wordTokenizer, err : %s", err.Error())
 	}
 
-	var arabicPhrase = preprocessing.NewspecialArabicPhraseNormalizer()
+	var arabicPhrase = preprocessing.NewSpecialArabicPhraseNormalizer()
 	var persianDigit = preprocessing.NewPersianDigitNormalizer()
 	var unicodeRep = preprocessing.NewUnicodeReplacementPersianNormalizer()
 	var punctuationRemover = preprocessing.NewPunctuationRemover()
@@ -68,12 +68,22 @@ func NewEngine() *Engine {
 
 	for _, col := range docCollection.DocList {
 		col.Content = preprocessor.Process(col.Content)
-		tokenized := tokenizer.Tokenize(col.Content)
+		tokenized := wordTokenizer.Tokenize(col.Content)
 		TokenizedCollection.DocList = append(TokenizedCollection.DocList, preprocessing.TkDocument{
 			Id:                 col.ID,
 			TokenzedDocContent: tokenized,
 			DocUrl:             col.Url,
 		})
+	}
+
+	mostUsedWordRemover := preprocessing.NewMostUsedWordRemover()
+	TokenizedCollection = mostUsedWordRemover.Process(TokenizedCollection)
+
+	stemmer := preprocessing.NewPersianStemmer()
+	for _, doc := range TokenizedCollection.DocList {
+		for idx, token := range doc.TokenzedDocContent {
+			doc.TokenzedDocContent[idx] = stemmer.Stem(token)
+		}
 	}
 
 	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
@@ -82,7 +92,7 @@ func NewEngine() *Engine {
 	engine := Engine{
 		DocumentCollection: &docCollection,
 		Preprocessor:       preprocessor,
-		Tokenizer:          tokenizer,
+		Tokenizer:          wordTokenizer,
 		Constructor:        MapReducer,
 		Index:              indx,
 		MaxResultCount:     30,

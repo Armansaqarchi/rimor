@@ -1,6 +1,7 @@
 package mapreducer
 
 import (
+	"log"
 	consts "rimor/pkg/consts"
 	segment "rimor/pkg/engine/inverter/mapreducer/segment"
 	preprocessing "rimor/pkg/engine/preprocessing"
@@ -8,45 +9,44 @@ import (
 
 type Parser struct {
 	runeGroups []rune
-	Out *segment.Segment
+	Out        *segment.Segment
 }
 
-
-func NewParser(groups int, Out *segment.Segment) Parser{
-	groups--;
+func NewParser(groups int, Out *segment.Segment) Parser {
+	groups--
 	criterion := consts.Criterion
 	length := len(criterion)
-	step :=  length / groups
+	step := length / groups
 
 	parser := Parser{
 		runeGroups: make([]rune, 0),
-		Out: Out,
-	}	
-	for i := 1; i <= groups + 1; i++{
-		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(groups * step, length) - 1])
+		Out:        Out,
+	}
+	for i := 1; i <= groups+1; i++ {
+		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(groups*step, length)-1])
 	}
 
 	return parser
 }
 
-func(p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
-	for _, d := range Input.DocList{
-		for _, t := range d.TokenzedDocContent {
-			p.AddTokenToFragment(t, int64(d.Id))
+func (p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
+	for _, doc := range Input.DocList {
+		for _, token := range doc.TokenzedDocContent {
+			p.AddTokenToFragment(token, int64(doc.Id))
 		}
 	}
 }
 
-
-func (p *Parser) AddTokenToFragment(t string, d int64) {
-	if len(t) > 0 {
-		// log if you want
+func (p *Parser) AddTokenToFragment(token string, docId int64) {
+	if len(token) <= 0 {
+		log.Default().Println("Token is empty in parser")
+		return
 	}
 	for idx, r := range p.runeGroups {
-		if rune(t[0]) <= r {
+		if rune(token[0]) <= r {
 			p.Out.Fragments[idx].AddPair(&segment.Pair{
-				Term: t,
-				Doc: d,
+				Term: token,
+				Doc:  docId,
 			})
 		}
 	}

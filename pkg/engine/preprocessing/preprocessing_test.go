@@ -6,10 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var arabicPhrase = NewspecialArabicPhraseNormalizer()
+var arabicPhrase = NewSpecialArabicPhraseNormalizer()
 var persianDigit = NewPersianDigitNormalizer()
 var unicodeRep = NewUnicodeReplacementPersianNormalizer()
-
 
 func TestUnicodeReplacementNormalization(t *testing.T) {
 	preprocessor := NewPreprocessor([]PreprocessingStep{
@@ -18,7 +17,7 @@ func TestUnicodeReplacementNormalization(t *testing.T) {
 
 	testCases := map[string]string{
 		"ﺁقای فرش": "آقای فرش",
-		"ﺁﺑﺎﺩ": "آباد",
+		"ﺁﺑﺎﺩ":     "آباد",
 	}
 
 	for input, expected := range testCases {
@@ -34,8 +33,8 @@ func TestPersianDigitNormalization(t *testing.T) {
 	})
 
 	testCases := map[string]string{
-		"1234567890": "۱۲۳۴۵۶۷۸۹۰" ,
-		"0123" : "۰۱۲۳" ,
+		"1234567890": "۱۲۳۴۵۶۷۸۹۰",
+		"0123":       "۰۱۲۳",
 	}
 
 	for input, expected := range testCases {
@@ -50,8 +49,8 @@ func TestSpecialArabicPhraseNormalization(t *testing.T) {
 	})
 
 	testCases := map[string]string{
-		"\ufdfb": "جل جلاله",
-		"پیامبر \ufdfb": "پیامبر جل جلاله" ,
+		"\ufdfb":        "جل جلاله",
+		"پیامبر \ufdfb": "پیامبر جل جلاله",
 	}
 
 	for input, expected := range testCases {
