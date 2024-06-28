@@ -93,8 +93,6 @@ func NewEngine() *Engine {
 
 	indx := MapReducer.CreateIndex(TokenizedCollection)
 
-
-
 	engine := Engine{
 		DocumentCollection: &docCollection,
 		Preprocessor:       preprocessor,

@@ -1,6 +1,7 @@
 package mapreducer
 
 import (
+	"fmt"
 	consts "rimor/pkg/consts"
 	segment "rimor/pkg/engine/inverter/mapreducer/segment"
 	preprocessing "rimor/pkg/engine/preprocessing"
@@ -22,7 +23,8 @@ func NewParser(groups int, Out *segment.Segment) Parser {
 		Out:        Out,
 	}
 	for i := 1; i <= groups+1; i++ {
-		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(groups*step, length)-1])
+		fmt.Print(min(i*step, length)-1)
+		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(i*step, length)-1])
 	}
 
 	return parser
@@ -46,7 +48,8 @@ func (p *Parser) AddTokenToFragment(token string, docId int64) {
 				Term: token,
 				Doc:  docId,
 			})
-			break
+			continue
+
 		}
 	}
 }
