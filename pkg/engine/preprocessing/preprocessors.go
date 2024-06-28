@@ -1,8 +1,9 @@
 package preprocessing
 
 import (
-	"math"
+	"log"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -89,46 +90,56 @@ func NewMostUsedWordRemover() MostUsedWordRemover {
 	}
 }
 
-func minKey(m map[string]int) (string, int) {
-	if len(m) == 0 {
-		return "", 0 // or handle the empty map case as needed
-	}
-
-	minKey := ""
-	minValue := math.MaxInt
-
-	for k, v := range m {
-		if v < minValue {
-			minKey = k
-			minValue = v
-		}
-	}
-
-	return minKey, minValue
-}
-
 func (normalizer *MostUsedWordRemover) Process(documentCollection TkDocumentCollection) TkDocumentCollection {
-	for _, toknizedDoc := range documentCollection.DocList {
-		for _, token := range toknizedDoc.TokenzedDocContent {
-			_, contains := normalizer.wordFreqMap[token]
-			if contains && len(normalizer.wordFreqMap) >= 50 {
-				minKey, _ := minKey(normalizer.wordFreqMap)
-				delete(normalizer.wordFreqMap, minKey)
+	// Step 1: Calculate the frequency of each word across all documents
+	for _, document := range documentCollection.DocList {
+		for _, word := range document.TokenzedDocContent {
+			if _, ok := normalizer.wordFreqMap[word]; ok {
+				normalizer.wordFreqMap[word]++
+			} else {
+				normalizer.wordFreqMap[word] = 1
 			}
-			normalizer.wordFreqMap[token] = 1
 		}
 	}
 
-	for _, toknizedDoc := range documentCollection.DocList {
-		var filteredTokens []string
-		for _, token := range toknizedDoc.TokenzedDocContent {
-			_, contains := normalizer.wordFreqMap[token]
-			if !contains {
-				filteredTokens = append(filteredTokens, token)
-			}
-		}
-		toknizedDoc.TokenzedDocContent = filteredTokens
+	// Step 2: Identify the top 50 most frequently used words
+	type wordFreqPair struct {
+		word  string
+		count int
+	}
+	var wordFreqPairs []wordFreqPair
+	for word, count := range normalizer.wordFreqMap {
+		wordFreqPairs = append(wordFreqPairs, wordFreqPair{word, count})
 	}
 
+	sort.Slice(wordFreqPairs, func(i, j int) bool {
+		return wordFreqPairs[i].count > wordFreqPairs[j].count
+	})
+
+	var top50Words map[string]struct{}
+	if len(wordFreqPairs) > 50 {
+		top50Words = make(map[string]struct{}, 50)
+		for i := 0; i < 50; i++ {
+			top50Words[wordFreqPairs[i].word] = struct{}{}
+		}
+	} else {
+		top50Words = make(map[string]struct{}, len(wordFreqPairs))
+		for _, pair := range wordFreqPairs {
+			top50Words[pair.word] = struct{}{}
+		}
+	}
+
+	// Step 3: Remove the top 50 words from each document's TokenzedDocContent
+	for i, document := range documentCollection.DocList {
+		var newContent []string
+		for _, word := range document.TokenzedDocContent {
+			if _, found := top50Words[word]; !found {
+				newContent = append(newContent, word)
+			}
+		}
+		documentCollection.DocList[i].TokenzedDocContent = newContent
+	}
+	log.Printf("Top 50 words: %v", top50Words)
+	// Step 4: Return the updated TkDocumentCollection
 	return documentCollection
 }
