@@ -82,6 +82,7 @@ func (normalizer *SpecialArabicPhraseNormalizer) Process(text string) string {
 
 type MostUsedWordRemover struct {
 	wordFreqMap map[string]int
+	top50Words  map[string]struct{}
 }
 
 func NewMostUsedWordRemover() MostUsedWordRemover {
@@ -90,9 +91,36 @@ func NewMostUsedWordRemover() MostUsedWordRemover {
 	}
 }
 
-func (normalizer *MostUsedWordRemover) Process(documentCollection TkDocumentCollection) TkDocumentCollection {
-	// Step 1: Calculate the frequency of each word across all documents
-	for _, document := range documentCollection.DocList {
+func (normalizer *MostUsedWordRemover) ProcessQuery(query []string) []string {
+	filteredQuery := make([]string, 0)
+	for _, token := range query {
+		if _, isInTop50 := normalizer.top50Words[token]; !isInTop50 {
+			filteredQuery = append(filteredQuery, token)
+		}
+	}
+
+	return filteredQuery
+}
+
+func (normalizer *MostUsedWordRemover) ProcessDocCollection(documentCollection TkDocumentCollection) TkDocumentCollection {
+	normalizer.createWordFreqMap(documentCollection)
+	normalizer.top50Words = normalizer.createTop50WordsMap()
+
+	for i, document := range documentCollection.DocList {
+		var newContent []string
+		for _, word := range document.TokenzedDocContent {
+			if _, found := normalizer.top50Words[word]; !found {
+				newContent = append(newContent, word)
+			}
+		}
+		documentCollection.DocList[i].TokenzedDocContent = newContent
+	}
+	log.Printf("Top 50 words: %v", normalizer.top50Words)
+	return documentCollection
+}
+
+func (normalizer *MostUsedWordRemover) createWordFreqMap(collection TkDocumentCollection) map[string]string {
+	for _, document := range collection.DocList {
 		for _, word := range document.TokenzedDocContent {
 			if _, ok := normalizer.wordFreqMap[word]; ok {
 				normalizer.wordFreqMap[word]++
@@ -101,7 +129,9 @@ func (normalizer *MostUsedWordRemover) Process(documentCollection TkDocumentColl
 			}
 		}
 	}
+}
 
+func (normalizer *MostUsedWordRemover) createTop50WordsMap() map[string]struct{} {
 	// Step 2: Identify the top 50 most frequently used words
 	type wordFreqPair struct {
 		word  string
@@ -129,17 +159,5 @@ func (normalizer *MostUsedWordRemover) Process(documentCollection TkDocumentColl
 		}
 	}
 
-	// Step 3: Remove the top 50 words from each document's TokenzedDocContent
-	for i, document := range documentCollection.DocList {
-		var newContent []string
-		for _, word := range document.TokenzedDocContent {
-			if _, found := top50Words[word]; !found {
-				newContent = append(newContent, word)
-			}
-		}
-		documentCollection.DocList[i].TokenzedDocContent = newContent
-	}
-	log.Printf("Top 50 words: %v", top50Words)
-	// Step 4: Return the updated TkDocumentCollection
-	return documentCollection
+	return top50Words
 }

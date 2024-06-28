@@ -21,12 +21,13 @@ import (
 )
 
 type Engine struct {
-	DocumentCollection *preprocessing.DocumentCollection
-	Preprocessor       preprocessing.Preprocessor
-	Tokenizer          *tokenizer.WordTokenizer
-	Constructor        *mapreducer.Master
-	Index              *xindex.Xindex
-	MaxResultCount     int
+	DocumentCollection  *preprocessing.DocumentCollection
+	Preprocessor        preprocessing.Preprocessor
+	MostUsedWordRemover *preprocessing.MostUsedWordRemover
+	Tokenizer           *tokenizer.WordTokenizer
+	Constructor         *mapreducer.Master
+	Index               *xindex.Xindex
+	MaxResultCount      int
 }
 
 func readDocumentCollection(documentCollectionPath string) (preprocessing.DocumentCollection, error) {
@@ -51,7 +52,7 @@ func NewEngine() *Engine {
 	}
 
 	logger.Info().Msg("tokenizing documents...")
-	
+
 	TokenizedCollection := preprocessing.TkDocumentCollection{
 		DocList: make([]preprocessing.TkDocument, 0),
 	}
@@ -83,7 +84,7 @@ func NewEngine() *Engine {
 	}
 	logger.Info().Msg("removing unused and stop words...")
 	mostUsedWordRemover := preprocessing.NewMostUsedWordRemover()
-	TokenizedCollection = mostUsedWordRemover.Process(TokenizedCollection)
+	TokenizedCollection = mostUsedWordRemover.ProcessDocCollection(TokenizedCollection)
 	logger.Info().Msg("stemming persian words...")
 	stemmer := preprocessing.NewPersianStemmer()
 	for _, doc := range TokenizedCollection.DocList {
@@ -97,15 +98,14 @@ func NewEngine() *Engine {
 
 	logger.Info().Msg("X index created successfully.\n\n")
 	engine := Engine{
-		DocumentCollection: &docCollection,
-		Preprocessor:       preprocessor,
-		Tokenizer:          wordTokenizer,
-		Constructor:        MapReducer,
-		Index:              indx,
-		MaxResultCount:     30,
+		DocumentCollection:  &docCollection,
+		Preprocessor:        preprocessor,
+		MostUsedWordRemover: &mostUsedWordRemover,
+		Tokenizer:           wordTokenizer,
+		Constructor:         MapReducer,
+		Index:               indx,
+		MaxResultCount:      30,
 	}
-
-
 
 	return &engine
 }
@@ -154,7 +154,8 @@ func (e *Engine) Query(tq string, useChampions bool) (*preprocessing.DocumentCol
 
 	fmt.Print("processing query...\n")
 	tq = e.Preprocessor.Process(tq)
-	tokenizedQuery := e.Tokenizer.Tokenize(tq)
+	tokenizedQuery := e.MostUsedWordRemover.ProcessQuery(e.Tokenizer.Tokenize(tq))
+
 	queryTermMap := make(map[string]int8)
 	fmt.Print("vectorizing query...\n")
 
