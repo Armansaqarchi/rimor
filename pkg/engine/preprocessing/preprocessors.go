@@ -119,7 +119,7 @@ func (normalizer *MostUsedWordRemover) ProcessDocCollection(documentCollection T
 	return documentCollection
 }
 
-func (normalizer *MostUsedWordRemover) createWordFreqMap(collection TkDocumentCollection) map[string]string {
+func (normalizer *MostUsedWordRemover) createWordFreqMap(collection TkDocumentCollection) {
 	for _, document := range collection.DocList {
 		for _, word := range document.TokenzedDocContent {
 			if _, ok := normalizer.wordFreqMap[word]; ok {
