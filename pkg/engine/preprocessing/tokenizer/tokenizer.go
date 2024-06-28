@@ -50,8 +50,6 @@ func NewWordTokenizer(
 	replaceIDs, replaceEmails, replaceNumbers, replaceHashtags bool,
 ) (*WordTokenizer, error) {
 
-	
-
 	tokenizer := &WordTokenizer{
 		joinVerbParts:      joinVerbParts,
 		joinAbbreviations:  joinAbbreviations,
@@ -74,8 +72,6 @@ func NewWordTokenizer(
 		verbe:              make(map[string]bool),
 		abbreviations:      make(map[string]string),
 	}
-
-
 
 	tokenizer.beforeVerbs = map[string]bool{
 		"خواهم":   true,
@@ -294,7 +290,9 @@ func (wt *WordTokenizer) loadAbbreviations() error {
 
 // Tokenize tokenizes the given text.
 func (wt *WordTokenizer) Tokenize(text string) []string {
-	// TODO: This tokenizer is replacing info such as email or link with a placeholder. This is not the intended behaviour and should be fixed
+	mailId := 0
+	mailMap := make(map[int]string)
+
 	if wt.joinAbbreviations {
 		text = wt.replaceAbbreviations(text)
 	}
@@ -302,7 +300,11 @@ func (wt *WordTokenizer) Tokenize(text string) []string {
 		text = wt.emojiPattern.ReplaceAllString(text, " $0 ")
 	}
 	if wt.replaceEmails {
-		text = wt.emailPattern.ReplaceAllString(text, " EMAIL ")
+		text = wt.emailPattern.ReplaceAllStringFunc(text, func(email string) string {
+			mailMap[mailId] = email
+			mailId++
+			return " EMAIL" + strconv.Itoa(mailId) + " "
+		})
 	}
 	if wt.replaceLinks {
 		text = wt.linkPattern.ReplaceAllString(text, " LINK ")
@@ -316,6 +318,10 @@ func (wt *WordTokenizer) Tokenize(text string) []string {
 
 	text = regexp.MustCompile(`[؟!?]+|[\d۰-۹.:]+|[:.،؛»\])}"«\[({/\\]`).ReplaceAllString(text, " $0 ")
 	tokens := strings.Fields(text)
+
+	if wt.replaceEmails {
+		wt.reAddRemovedEmails(tokens, mailMap)
+	}
 
 	if wt.joinVerbParts {
 		tokens = wt.joinVerbPartsFunc(tokens)
@@ -381,4 +387,14 @@ func (wt *WordTokenizer) revertAbbreviations(tokens []string) []string {
 		}
 	}
 	return tokens
+}
+
+func (wt *WordTokenizer) reAddRemovedEmails(tokens []string, mailMap map[int]string) {
+	for tokenIdx, token := range tokens {
+		if strings.Contains(token, "EMAIL") {
+			i, _ := strconv.Atoi(strings.Split(token, "EMAIL")[1])
+			tokens[tokenIdx] = mailMap[i]
+			tokens = slices.Delete(tokens, tokenIdx+1, tokenIdx+2)
+		}
+	}
 }

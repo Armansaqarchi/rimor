@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var tokenizer, _ = NewWordTokenizer(WORDS_PATH, VERBS_PATH, true, false, false, false, false, true, false, false)
+var tokenizer, _ = NewWordTokenizer("words.dat", "verbs.dat", true, false, false, false, false, true, false, false)
 var TEST_DEBUG_MODE = true
 
 func TestSimpleSentence(t *testing.T) {

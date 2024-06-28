@@ -50,7 +50,7 @@ func NewEngine() *Engine {
 	TokenizedCollection := preprocessing.TkDocumentCollection{
 		DocList: make([]preprocessing.TkDocument, 0),
 	}
-	tokenizer, err := tokenizer.NewWordTokenizer(tokenizer.WORDS_PATH, tokenizer.VERBS_PATH, false, false, false, false, false, false, false, false)
+	tokenizer, err := tokenizer.NewWordTokenizer(tokenizer.WORDS_PATH, tokenizer.VERBS_PATH, true, false, false, false, false, true, false, false)
 	if err != nil {
 		log.Fatalf("failed to instantiate the tokenizer, err : %s", err.Error())
 	}
