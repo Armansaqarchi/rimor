@@ -6,29 +6,26 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
 type EngineHandler struct {
 	Engine *engine.Engine
 }
 
 var e *EngineHandler
 
-func GetEngineHandler() *EngineHandler{
+func GetEngineHandler() *EngineHandler {
 	if e != nil {
 		return e
 	}
 	return newEngineHandler()
 }
 
-
-func newEngineHandler() *EngineHandler{
+func newEngineHandler() *EngineHandler {
 	return &EngineHandler{
 		Engine: engine.NewEngine(),
 	}
 }
 
-
-func (e EngineHandler) Query(ctx *fiber.Ctx) error{
+func (e EngineHandler) Query(ctx *fiber.Ctx) error {
 	if text := ctx.Query("text", ""); text == "" {
 		return ctx.Status(400).JSON(
 			map[string]any{
@@ -36,7 +33,8 @@ func (e EngineHandler) Query(ctx *fiber.Ctx) error{
 			},
 		)
 	} else {
-		res , err := e.Engine.Query(text)
+		useChampions := ctx.Query("useChampions", "false") == "true"
+		res, err := e.Engine.Query(text, useChampions)
 		if err != nil {
 			return err
 		}

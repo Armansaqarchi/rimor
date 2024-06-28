@@ -11,15 +11,14 @@ type Inverter struct {
 	Out *xindex.Xindex
 }
 
-
-func NewInverter() Inverter{
+func NewInverter() Inverter {
 	return Inverter{
 		Out: &xindex.Xindex{
-			Records: make([]record.Recorder, 0),
+			Records:     make([]record.Recorder, 0),
+			ChampionNum: 1024,
 		},
 	}
 }
-
 
 func (inv *Inverter) Serve(Input *segment.Segment) {
 	combinedFragment := segment.Fragment{
@@ -29,13 +28,13 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 		combinedFragment.Pairs = append(combinedFragment.Pairs, frag.Pairs...)
 	}
 	sort.Sort(combinedFragment)
-	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc)) 
+	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc))
 	currentRec := inv.Out.Records[0]
 	for _, t := range combinedFragment.Pairs[1:] {
 		if t.Term == currentRec.GetTerm() {
-			if currentRec.GetLast().GetDocID() == t.Doc{
+			if currentRec.GetLast().GetDocID() == t.Doc {
 				currentRec.GetLast().IncreaseTF()
-			} else{
+			} else {
 				currentRec.AddToPosting(record.NewPostingListElem(t.Doc, nil))
 				currentRec.IncreaseDF()
 			}

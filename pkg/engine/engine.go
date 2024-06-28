@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	consts "rimor/pkg/consts"
+	"rimor/pkg/engine/dictionary/record"
 	"rimor/pkg/engine/dictionary/xindex"
 	"rimor/pkg/engine/inverter/mapreducer"
 	MReduce "rimor/pkg/engine/inverter/mapreducer"
@@ -23,7 +24,7 @@ type Engine struct {
 	Tokenizer          *tokenizer.WordTokenizer
 	Constructor        *mapreducer.Master
 	Index              *xindex.Xindex
-	K                  int
+	MaxResultCount     int
 }
 
 func readDocumentCollection(documentCollectionPath string) (preprocessing.DocumentCollection, error) {
@@ -76,7 +77,7 @@ func NewEngine() *Engine {
 	}
 
 	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
-	indx := MapReducer.MapReduce(TokenizedCollection)
+	indx := MapReducer.CreateIndex(TokenizedCollection)
 
 	engine := Engine{
 		DocumentCollection: &docCollection,
@@ -84,7 +85,7 @@ func NewEngine() *Engine {
 		Tokenizer:          tokenizer,
 		Constructor:        MapReducer,
 		Index:              indx,
-		K:                  30,
+		MaxResultCount:     30,
 	}
 
 	return &engine
@@ -99,7 +100,7 @@ type Query struct {
 	Vector []VectorElem
 }
 
-func (e *Engine) Score(q Query) ([]float64, error) {
+func (e *Engine) Score(q Query, useChampions bool) ([]float64, error) {
 	scores := make([]float64, e.Index.DocNum)
 	for _, t := range q.Vector {
 		r, err := e.Index.BinarySearchRecord(t.Term)
@@ -111,7 +112,14 @@ func (e *Engine) Score(q Query) ([]float64, error) {
 			fmt.Print(err.Error())
 			return nil, err
 		}
-		p := r.GetPostingList()
+
+		var p record.IPostingElem = nil
+		if useChampions {
+			p = r.GetChampion()
+		} else {
+			p = r.GetPostingList()
+		}
+
 		for p != nil {
 			Wtd := scoring.TF_IDF(p.GetTF(), r.GetDF(), e.Index.DocNum)
 			Wtq := scoring.TF_IDF(t.Value, r.GetDF(), e.Index.DocNum)
@@ -123,13 +131,13 @@ func (e *Engine) Score(q Query) ([]float64, error) {
 	return scores, nil
 }
 
-func (e *Engine) Query(tq string) (*preprocessing.DocumentCollection, error) {
+func (e *Engine) Query(tq string, useChampions bool) (*preprocessing.DocumentCollection, error) {
 
 	fmt.Print("processing query...\n")
 	tq = e.Preprocessor.Process(tq)
 	tokenizedQuery := e.Tokenizer.Tokenize(tq)
 	queryTermMap := make(map[string]int8)
-	fmt.Print("vectorizing query\n")
+	fmt.Print("vectorizing query...\n")
 
 	vectorizedQuery := []VectorElem{}
 
@@ -152,7 +160,7 @@ func (e *Engine) Query(tq string) (*preprocessing.DocumentCollection, error) {
 	q := Query{
 		Vector: vectorizedQuery,
 	}
-	scores, err := e.Score(q)
+	scores, err := e.Score(q, useChampions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process query, err : %s", err.Error())
 	}
@@ -167,7 +175,7 @@ func (e *Engine) Query(tq string) (*preprocessing.DocumentCollection, error) {
 
 	DocCollection := preprocessing.DocumentCollection{}
 
-	for i := 0; i < e.K; i++ {
+	for i := 0; i < e.MaxResultCount; i++ {
 		ds, ok := heap.Pop(&sh).(DocumentScore)
 		if !ok {
 			return nil, fmt.Errorf("something went wrong while evaluating documents")
