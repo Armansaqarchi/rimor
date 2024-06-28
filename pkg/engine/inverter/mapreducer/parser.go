@@ -1,7 +1,6 @@
 package mapreducer
 
 import (
-	"log"
 	consts "rimor/pkg/consts"
 	segment "rimor/pkg/engine/inverter/mapreducer/segment"
 	preprocessing "rimor/pkg/engine/preprocessing"
@@ -39,7 +38,6 @@ func (p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
 
 func (p *Parser) AddTokenToFragment(token string, docId int64) {
 	if len(token) <= 0 {
-		log.Default().Println("Token is empty in parser")
 		return
 	}
 	for idx, r := range p.runeGroups {
@@ -48,6 +46,7 @@ func (p *Parser) AddTokenToFragment(token string, docId int64) {
 				Term: token,
 				Doc:  docId,
 			})
+			continue
 		}
 	}
 }

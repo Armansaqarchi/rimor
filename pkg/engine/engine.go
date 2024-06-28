@@ -87,7 +87,13 @@ func NewEngine() *Engine {
 	}
 
 	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
+
+
+
+
 	indx := MapReducer.CreateIndex(TokenizedCollection)
+
+
 
 	engine := Engine{
 		DocumentCollection: &docCollection,
@@ -97,6 +103,9 @@ func NewEngine() *Engine {
 		Index:              indx,
 		MaxResultCount:     30,
 	}
+
+
+	
 
 	return &engine
 }
