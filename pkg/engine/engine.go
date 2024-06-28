@@ -16,6 +16,8 @@ import (
 	tokenizer "rimor/pkg/engine/preprocessing/tokenizer"
 	"rimor/pkg/scoring"
 	errors_util "rimor/pkg/utils/errors"
+
+	logger "github.com/rs/zerolog/log"
 )
 
 type Engine struct {
@@ -42,11 +44,14 @@ func readDocumentCollection(documentCollectionPath string) (preprocessing.Docume
 }
 
 func NewEngine() *Engine {
+	logger.Info().Msg("reading documents from file...")
 	docCollection, err := readDocumentCollection(consts.COLLECTION_PATH)
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	logger.Info().Msg("tokenizing documents...")
+	
 	TokenizedCollection := preprocessing.TkDocumentCollection{
 		DocList: make([]preprocessing.TkDocument, 0),
 	}
@@ -59,6 +64,7 @@ func NewEngine() *Engine {
 	var persianDigit = preprocessing.NewPersianDigitNormalizer()
 	var unicodeRep = preprocessing.NewUnicodeReplacementPersianNormalizer()
 	var punctuationRemover = preprocessing.NewPunctuationRemover()
+	logger.Info().Msg("preprocessing documents...")
 	preprocessor := preprocessing.NewPreprocessor([]preprocessing.PreprocessingStep{
 		&arabicPhrase,
 		&persianDigit,
@@ -75,25 +81,21 @@ func NewEngine() *Engine {
 			DocUrl:             col.Url,
 		})
 	}
-
+	logger.Info().Msg("removing unused and stop words...")
 	mostUsedWordRemover := preprocessing.NewMostUsedWordRemover()
 	TokenizedCollection = mostUsedWordRemover.Process(TokenizedCollection)
-
+	logger.Info().Msg("stemming persian words...")
 	stemmer := preprocessing.NewPersianStemmer()
 	for _, doc := range TokenizedCollection.DocList {
 		for idx, token := range doc.TokenzedDocContent {
 			doc.TokenzedDocContent[idx] = stemmer.Stem(token)
 		}
 	}
-
+	logger.Info().Msg("creating inverted index using MapReduce concurrent algorithm...")
 	MapReducer := MReduce.NewMaster(8, len(TokenizedCollection.DocList)/4, 30)
-
-
-
-
 	indx := MapReducer.CreateIndex(TokenizedCollection)
 
-
+	logger.Info().Msg("X index created successfully.\n\n")
 	engine := Engine{
 		DocumentCollection: &docCollection,
 		Preprocessor:       preprocessor,
@@ -104,7 +106,6 @@ func NewEngine() *Engine {
 	}
 
 
-	
 
 	return &engine
 }

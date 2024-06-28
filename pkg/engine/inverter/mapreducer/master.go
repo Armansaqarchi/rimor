@@ -1,7 +1,6 @@
 package mapreducer
 
 import (
-	"fmt"
 	record "rimor/pkg/engine/dictionary/record"
 	index "rimor/pkg/engine/dictionary/xindex"
 	segment "rimor/pkg/engine/inverter/mapreducer/segment"
