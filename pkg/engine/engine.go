@@ -16,6 +16,8 @@ import (
 	tokenizer "rimor/pkg/engine/preprocessing/tokenizer"
 	"rimor/pkg/scoring"
 	errors_util "rimor/pkg/utils/errors"
+	"strconv"
+	"time"
 
 	logger "github.com/rs/zerolog/log"
 )
@@ -45,6 +47,8 @@ func readDocumentCollection(documentCollectionPath string) (preprocessing.Docume
 }
 
 func NewEngine() *Engine {
+	logger.Info().Msg("engine initialization started...")
+	engineInitTimestamp := time.Now()
 	logger.Info().Msg("reading documents from file...")
 	docCollection, err := readDocumentCollection(consts.COLLECTION_PATH)
 	if err != nil {
@@ -86,7 +90,7 @@ func NewEngine() *Engine {
 	mostUsedWordRemover := preprocessing.NewMostUsedWordRemover()
 	TokenizedCollection = mostUsedWordRemover.ProcessDocCollection(TokenizedCollection)
 	logger.Info().Msg("stemming persian words...")
-	stemmer := preprocessing.NewPersianStemmer()
+	stemmer := preprocessing.NewComplexPersianStemmer()
 	for _, doc := range TokenizedCollection.DocList {
 		for idx, token := range doc.TokenzedDocContent {
 			doc.TokenzedDocContent[idx] = stemmer.Stem(token)
@@ -107,6 +111,7 @@ func NewEngine() *Engine {
 		MaxResultCount:      30,
 	}
 
+	logger.Info().Msg("engine initialization took " + strconv.Itoa(time.Now().Second()-engineInitTimestamp.Second()) + " seconds")
 	return &engine
 }
 
