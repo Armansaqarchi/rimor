@@ -1,15 +1,16 @@
 package mapreducer
 
 import (
-	"fmt"
 	consts "rimor/pkg/consts"
 	segment "rimor/pkg/engine/inverter/mapreducer/segment"
 	preprocessing "rimor/pkg/engine/preprocessing"
+	"unicode/utf8"
 )
 
 type Parser struct {
 	runeGroups []rune
 	Out        *segment.Segment
+	
 }
 
 func NewParser(groups int, Out *segment.Segment) Parser {
@@ -23,7 +24,6 @@ func NewParser(groups int, Out *segment.Segment) Parser {
 		Out:        Out,
 	}
 	for i := 1; i <= groups+1; i++ {
-		fmt.Print(min(i*step, length)-1)
 		parser.runeGroups = append(parser.runeGroups, consts.Criterion[min(i*step, length)-1])
 	}
 
@@ -36,6 +36,7 @@ func (p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
 			p.AddTokenToFragment(token, int64(doc.Id))
 		}
 	}
+
 }
 
 func (p *Parser) AddTokenToFragment(token string, docId int64) {
@@ -43,12 +44,13 @@ func (p *Parser) AddTokenToFragment(token string, docId int64) {
 		return
 	}
 	for idx, r := range p.runeGroups {
-		if rune(token[0]) <= r {
+		t, _ := utf8.DecodeRuneInString(token)
+		if t <= r {
 			p.Out.Fragments[idx].AddPair(&segment.Pair{
 				Term: token,
 				Doc:  docId,
 			})
-			break
+			return
 		}
 	}
 }
