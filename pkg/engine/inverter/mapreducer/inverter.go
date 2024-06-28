@@ -27,6 +27,11 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 	for _, frag := range Input.Fragments {
 		combinedFragment.Pairs = append(combinedFragment.Pairs, frag.Pairs...)
 	}
+
+	if len(combinedFragment.Pairs) == 0 {
+		return
+	}
+
 	sort.Sort(combinedFragment)
 	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc))
 	currentRec := inv.Out.Records[0]

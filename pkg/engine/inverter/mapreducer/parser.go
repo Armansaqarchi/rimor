@@ -48,8 +48,7 @@ func (p *Parser) AddTokenToFragment(token string, docId int64) {
 				Term: token,
 				Doc:  docId,
 			})
-			continue
-
+			break
 		}
 	}
 }
