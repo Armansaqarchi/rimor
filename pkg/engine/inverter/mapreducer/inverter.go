@@ -33,14 +33,16 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 	}
 
 	sort.Sort(combinedFragment)
-	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc))
+	inv.Out.Records = append(inv.Out.Records, record.NewRecord(combinedFragment.Pairs[0].Term, combinedFragment.Pairs[0].Doc, combinedFragment.Pairs[0].Num))
 	currentRec := inv.Out.Records[0]
 	for _, t := range combinedFragment.Pairs[1:] {
 		if t.Term == currentRec.GetTerm() {
 			if currentRec.GetLast().GetDocID() == t.Doc {
 				currentRec.GetLast().IncreaseTF()
+				currentRec.GetLast().AddPosition(t.Num)
 			} else {
 				currentRec.AddToPosting(record.NewPostingListElem(t.Doc, nil))
+				currentRec.GetLast().AddPosition(t.Num)
 				currentRec.IncreaseDF()
 			}
 			continue
@@ -48,6 +50,7 @@ func (inv *Inverter) Serve(Input *segment.Segment) {
 		currentRec = record.NewRecord(
 			t.Term,
 			t.Doc,
+			t.Num,
 		)
 		inv.Out.Records = append(inv.Out.Records, currentRec)
 	}

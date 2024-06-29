@@ -1,7 +1,6 @@
 package preprocessing
 
 import (
-	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -115,7 +114,6 @@ func (normalizer *MostUsedWordRemover) ProcessDocCollection(documentCollection T
 		}
 		documentCollection.DocList[i].TokenzedDocContent = newContent
 	}
-	log.Printf("Top 50 words: %v", normalizer.top50Words)
 	return documentCollection
 }
 

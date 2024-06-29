@@ -6,12 +6,15 @@ type IPostingElem interface {
 	GetNextElem() IPostingElem
 	SetNextElem(IPostingElem)
 	IncreaseTF()
+	AddPosition(x int64)
+	GetPositions() []int64
 }
 
 type PostingElem struct {
 	DocID    int64
 	TF       int64
 	NextElem IPostingElem
+	Positions []int64
 }
 
 func NewPostingListElem(docID int64, next IPostingElem) IPostingElem {
@@ -19,11 +22,20 @@ func NewPostingListElem(docID int64, next IPostingElem) IPostingElem {
 		TF:       1,
 		DocID:    docID,
 		NextElem: next,
+		Positions: make([]int64, 0),
 	}
 }
 
 func (ple *PostingElem) GetTF() int64 {
 	return ple.TF
+}
+
+func (ple *PostingElem) AddPosition(x int64){
+	ple.Positions = append(ple.Positions, x)
+}
+
+func (ple *PostingElem) GetPositions() []int64 {
+	return ple.Positions
 }
 
 func (ple *PostingElem) GetDocID() int64 {

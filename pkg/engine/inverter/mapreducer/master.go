@@ -105,6 +105,9 @@ func (m *Master) MapReduce(tk preprocessing.TkDocumentCollection) *index.Xindex 
 		x.DocLengths = append(x.DocLengths, int64(len(td.TokenzedDocContent)))
 	}
 
+	
+
+
 	return &x
 }
 

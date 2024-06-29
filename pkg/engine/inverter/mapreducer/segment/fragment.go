@@ -25,4 +25,5 @@ func (f Fragment) Swap(i, j int) {
 type Pair struct {
 	Term string
 	Doc  int64
+	Num int64
 }

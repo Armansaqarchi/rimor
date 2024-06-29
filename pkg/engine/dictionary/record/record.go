@@ -10,6 +10,7 @@ type Recorder interface {
 	GetPostingList() IPostingElem
 	CreateChampions()
 	GetChampion() IPostingElem
+
 }
 
 type Record struct {
@@ -21,16 +22,18 @@ type Record struct {
 	ChampionNum  int
 }
 
-func NewRecord(term string, DocID int64) Recorder {
+func NewRecord(term string, DocID int64, Num int64) Recorder {
 	DocRef := NewPostingListElem(DocID, nil)
 	defaultChampionNum := 1024
-	return &Record{
+	r := &Record{
 		Term:        term,
 		DF:          0,
 		PostingList: DocRef,
 		Last:        DocRef,
 		ChampionNum: defaultChampionNum,
 	}
+	r.GetLast().AddPosition(Num)
+	return r
 }
 
 func (r *Record) GetTerm() string {

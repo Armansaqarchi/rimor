@@ -32,14 +32,14 @@ func NewParser(groups int, Out *segment.Segment) Parser {
 
 func (p *Parser) Serve(Input *preprocessing.TkDocumentCollection) {
 	for _, doc := range Input.DocList {
-		for _, token := range doc.TokenzedDocContent {
-			p.AddTokenToFragment(token, int64(doc.Id))
+		for x, token := range doc.TokenzedDocContent {
+			p.AddTokenToFragment(token, int64(doc.Id), x)
 		}
 	}
 
 }
 
-func (p *Parser) AddTokenToFragment(token string, docId int64) {
+func (p *Parser) AddTokenToFragment(token string, docId int64, x int) {
 	if len(token) <= 0 {
 		return
 	}
@@ -49,6 +49,7 @@ func (p *Parser) AddTokenToFragment(token string, docId int64) {
 			p.Out.Fragments[idx].AddPair(&segment.Pair{
 				Term: token,
 				Doc:  docId,
+				Num: int64(x),
 			})
 			return
 		}
